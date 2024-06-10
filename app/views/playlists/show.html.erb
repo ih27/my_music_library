@@ -1,4 +1,8 @@
 <div class="container">
+  <div class="center-align">
+    <%= link_to 'Back to Playlists', playlists_path, class: 'btn waves-effect waves-light' %>
+  </div>
+
   <h1 class="center-align"><%= @playlist.name %></h1>
 
   <% if @playlist.cover_art.attached? %>
@@ -42,6 +46,9 @@
     <% end %>
     </tbody>
   </table>
+  <div class="center-align">
+    <%= link_to 'Back to Playlists', playlists_path, class: 'btn waves-effect waves-light' %>
+  </div>
 </div>
 
 <%= javascript_include_tag "https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.14.0/Sortable.min.js" %>

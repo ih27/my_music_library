@@ -1,0 +1,25 @@
+<div class="container">
+  <h1 class="center-align">Playlists</h1>
+  <div class="right-align">
+    <%= link_to 'Create New Playlist', new_playlist_path, class: 'btn waves-effect waves-light' %>
+  </div>
+  <table class="striped highlight responsive-table">
+    <thead>
+    <tr>
+      <th>Name</th>
+      <th>Actions</th>
+    </tr>
+    </thead>
+    <tbody>
+    <% @playlists.each do |playlist| %>
+      <tr>
+        <td><%= link_to playlist.name, playlist_path(playlist) %></td>
+        <td>
+          <%= link_to 'Show', playlist_path(playlist), class: 'btn waves-effect waves-light' %>
+          <%= link_to 'Delete', playlist_path(playlist), method: :delete, data: { confirm: 'Are you sure?' }, class: 'btn waves-effect waves-light red' %>
+        </td>
+      </tr>
+    <% end %>
+    </tbody>
+  </table>
+</div>

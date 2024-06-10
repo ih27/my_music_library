@@ -1,0 +1,39 @@
+<div class="container">
+  <h1 class="center-align">New Playlist</h1>
+
+  <%= form_with model: @playlist, local: true, html: { multipart: true }, class: 'row' do |form| %>
+    <% if @playlist.errors.any? %>
+      <div id="error_explanation" class="card-panel red lighten-4">
+        <h2><%= pluralize(@playlist.errors.count, "error") %> prohibited this playlist from being saved:</h2>
+        <ul>
+          <% @playlist.errors.full_messages.each do |message| %>
+            <li><%= message %></li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
+
+    <div class="input-field col s12">
+      <%= form.label :name %>
+      <%= form.text_field :name, class: 'validate' %>
+    </div>
+
+    <div class="file-field input-field col s12">
+      <div class="btn">
+        <span>Cover Art</span>
+        <%= form.file_field :cover_art %>
+      </div>
+    </div>
+
+    <div class="file-field input-field col s12">
+      <div class="btn">
+        <span>Playlist File</span>
+        <%= form.file_field :file %>
+      </div>
+    </div>
+
+    <div class="col s12">
+      <%= form.submit 'Create Playlist', class: 'btn waves-effect waves-light' %>
+    </div>
+  <% end %>
+</div>

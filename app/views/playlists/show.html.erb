@@ -1,0 +1,75 @@
+<div class="container">
+  <h1 class="center-align"><%= @playlist.name %></h1>
+
+  <% if @playlist.cover_art.attached? %>
+    <div class="center-align">
+      <%= image_tag @playlist.cover_art, class: 'rounded img-fluid img-thumbnail' %>
+    </div>
+  <% else %>
+    <div class="center-align">
+      <%= image_tag 'default_cover_art.jpg', class: 'rounded img-fluid img-thumbnail' %>
+    </div>
+  <% end %>
+
+  <h2 class="center-align">Tracks</h2>
+  <table id="tracks-table" class="striped highlight responsive-table">
+    <thead>
+    <tr>
+      <th>Order</th>
+      <th>Name</th>
+      <th>Artist(s)</th>
+      <th>Key</th>
+      <th>BPM</th>
+      <th>Time</th>
+      <th>Album</th>
+      <th>Date Added</th>
+      <th>Comments</th>
+    </tr>
+    </thead>
+    <tbody>
+    <% @playlist.playlists_tracks.order(:order).each do |playlists_track| %>
+      <tr data-id="<%= playlists_track.track.id %>">
+        <td class="order-cell"><%= playlists_track.order %></td>
+        <td><%= playlists_track.track.name %></td>
+        <td><%= playlists_track.track.artists.map(&:name).join(", ") %></td>
+        <td><%= playlists_track.track.key %></td>
+        <td><%= playlists_track.track.bpm %></td>
+        <td><%= format_time(playlists_track.track.time) %></td>
+        <td><%= playlists_track.track.album %></td>
+        <td><%= playlists_track.track.date_added %></td>
+        <td><%= playlists_track.track.comments %></td>
+      </tr>
+    <% end %>
+    </tbody>
+  </table>
+</div>
+
+<%= javascript_include_tag "https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.14.0/Sortable.min.js" %>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var el = document.getElementById('tracks-table').getElementsByTagName('tbody')[0];
+        var sortable = Sortable.create(el, {
+            animation: 150,
+            onEnd: function(evt) {
+                var order = [];
+                var rows = el.getElementsByTagName('tr');
+                for (var i = 0; i < rows.length; i++) {
+                    order.push({
+                        id: rows[i].getAttribute('data-id'),
+                        order: i + 1
+                    });
+                    // Update the order number in the table
+                    rows[i].querySelector('.order-cell').textContent = i + 1;
+                }
+                fetch('<%= reorder_tracks_playlist_path(@playlist) %>', {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-Token': '<%= form_authenticity_token %>'
+                    },
+                    body: JSON.stringify({ order: order })
+                });
+            }
+        });
+    });
+</script>

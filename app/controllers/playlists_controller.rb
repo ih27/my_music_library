@@ -7,10 +7,18 @@ class PlaylistsController < ApplicationController
 
   def create
     Rails.logger.info "Params received: #{params.inspect}"
-    @playlist = Playlist.new(playlist_params.except(:file))
-
     file = params[:playlist][:file]
+    cover_art = params[:playlist][:cover_art]
+
     if file.present?
+      # Extract the name from the filename (without the extension)
+      playlist_name = File.basename(file.original_filename, File.extname(file.original_filename))
+      @playlist = Playlist.new(name: playlist_name)
+
+      if cover_art.present?
+        @playlist.cover_art.attach(cover_art)
+      end
+      
       importer = PlaylistImporter.new(@playlist, file)
       if importer.call
         attach_default_cover_art unless @playlist.cover_art.attached?
@@ -21,7 +29,8 @@ class PlaylistsController < ApplicationController
         render :new, status: :unprocessable_entity
       end
     else
-      # TODO: what if playlist file is not uploaded? deal with it later, keep empty for now
+      flash.now[:alert] = 'File is required to create a playlist.'
+      render :new, status: :unprocessable_entity
     end
   end
 
@@ -39,20 +48,24 @@ class PlaylistsController < ApplicationController
 
   def reorder_tracks
     order = params[:order]
+
     ActiveRecord::Base.transaction do
       order.each do |item|
-        playlist_track = PlaylistsTrack.find(item[:id])
-        playlist_track.update_column(:order, nil)  # Temporarily set to nil to avoid uniqueness conflict
-      end
-
-      order.each do |item|
-        playlist_track = PlaylistsTrack.find(item[:id])
-        playlist_track.update!(order: item[:order])
+        playlist_track = PlaylistsTrack.find_by(playlist_id: @playlist.id, track_id: item[:id])
+        if playlist_track
+          playlist_track.update_column(:order, item[:order])
+        else
+          Rails.logger.error "Couldn't find PlaylistsTrack with playlist_id: #{@playlist.id} and track_id: #{item[:id]}"
+          raise ActiveRecord::RecordNotFound, "Couldn't find PlaylistsTrack with playlist_id: #{@playlist.id} and track_id: #{item[:id]}"
+        end
       end
     end
+
     head :ok
   rescue ActiveRecord::RecordInvalid => e
     render json: { error: e.message }, status: :unprocessable_entity
+  rescue ActiveRecord::RecordNotFound => e
+    render json: { error: e.message }, status: :not_found
   end
 
   private
@@ -62,7 +75,7 @@ class PlaylistsController < ApplicationController
   end
 
   def playlist_params
-    params.require(:playlist).permit(:name, :cover_art, :file)
+    params.require(:playlist).permit(:cover_art, :file)
   end
 
   def attach_default_cover_art

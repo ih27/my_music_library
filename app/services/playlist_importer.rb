@@ -11,24 +11,44 @@ class PlaylistImporter
     return false if @track_ids.empty?
     return false if duplicate_playlist?
 
-    # Assign the tracks to the playlist and save it
-    @playlist.track_ids = @track_ids
     ActiveRecord::Base.transaction do
-      @playlist.save!
-      @tracks_data.each do |track_data|
+      Rails.logger.info "Attempting to save playlist with track_ids: #{@track_ids.inspect}"
+
+      begin
+        @playlist.save!
+        Rails.logger.info "Playlist saved successfully with id: #{@playlist.id}"
+      rescue ActiveRecord::RecordInvalid => e
+        Rails.logger.error "Playlist validation failed: #{e.record.errors.full_messages.join(', ')}"
+        return false
+      end
+
+      @tracks_data.each_with_index do |track_data, index|
         track = Track.find_or_create_by!(track_data[:track_attributes])
         track_data[:artists].each do |artist_name|
           artist = Artist.find_or_create_by!(name: artist_name)
           track.artists << artist unless track.artists.include?(artist)
         end
-        PlaylistsTrack.create!(playlist: @playlist, track: track, order: track_data[:order])
+
+        # Ensure order is set and log detailed information before creating PlaylistsTrack
+        order = track_data[:order] || index + 1
+        Rails.logger.info "Creating PlaylistsTrack with playlist_id: #{@playlist.id}, track_id: #{track.id}, order: #{order}"
+        
+        # Create PlaylistsTrack and handle potential validation errors
+        playlists_track = PlaylistsTrack.new(playlist: @playlist, track: track, order: order)
+        Rails.logger.info "PlaylistsTrack attributes: #{playlists_track.attributes.inspect}"
+        
+        unless playlists_track.save
+          Rails.logger.error "PlaylistsTrack validation failed: #{playlists_track.errors.full_messages.join(', ')}"
+          raise ActiveRecord::RecordInvalid.new(playlists_track)
+        end
       end
     end
     true
   rescue ActiveRecord::RecordInvalid => e
-    Rails.logger.error "Playlist creation failed: #{e.message}" # Highlighted: Added logging for errors
-    false # Highlighted: Ensure method returns false on failure
+    Rails.logger.error "Playlist creation failed: #{e.message}"
+    false
   end
+
 
   private
 

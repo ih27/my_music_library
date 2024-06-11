@@ -1,4 +1,8 @@
 <div class="container">
+  <div class="center-align">
+    <%= link_to 'Back to Playlists', playlists_path, class: 'btn waves-effect waves-light' %>
+  </div>
+
   <h1 class="center-align">New Playlist</h1>
 
   <%= form_with model: @playlist, local: true, html: { multipart: true }, class: 'row' do |form| %>
@@ -12,11 +16,6 @@
         </ul>
       </div>
     <% end %>
-
-    <div class="input-field col s12">
-      <%= form.label :name %>
-      <%= form.text_field :name, class: 'validate' %>
-    </div>
 
     <div class="file-field input-field col s12">
       <div class="btn">
@@ -36,4 +35,8 @@
       <%= form.submit 'Create Playlist', class: 'btn waves-effect waves-light' %>
     </div>
   <% end %>
+
+  <div class="center-align">
+    <%= link_to 'Back to Playlists', playlists_path, class: 'btn waves-effect waves-light' %>
+  </div>
 </div>

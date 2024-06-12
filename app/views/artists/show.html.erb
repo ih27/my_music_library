@@ -1,0 +1,57 @@
+<div class="container mt-4">
+  <div class="card">
+    <div class="card-body">
+      <h1 class="card-title text-center"><%= @artist.name %></h1>
+
+      <div class="card-text mt-4">
+        <h5>Total Tracks</h5>
+        <p><%= @artist.tracks.count %> tracks</p>
+      </div>
+
+      <div class="card-text mt-4">
+        <h5>Number of Playlists</h5>
+        <p><%= @playlists.count %> playlists</p>
+      </div>
+
+      <div class="card-text mt-4">
+        <h5>Tracks</h5>
+        <table class="table table-striped">
+          <thead>
+          <tr>
+            <th>Name</th>
+            <th>Key</th>
+            <th>BPM</th>
+            <th>Time</th>
+            <th>Album</th>
+            <th>Date Added</th>
+            <th>Comments</th>
+          </tr>
+          </thead>
+          <tbody>
+          <% @artist.tracks.each do |track| %>
+            <tr>
+              <td><%= track.name %></td>
+              <td><%= track.key %></td>
+              <td><%= track.bpm %></td>
+              <td><%= format_time(track.time) %></td>
+              <td><%= track.album %></td>
+              <td><%= track.date_added %></td>
+              <td><%= track.comments %></td>
+            </tr>
+          <% end %>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card-text mt-4">
+        <h5>Playlists</h5>
+        <ul>
+          <% @playlists.each do |playlist| %>
+            <li><%= link_to playlist.name, playlist_path(playlist) %></li>
+          <% end %>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+</div>

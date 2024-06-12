@@ -3,7 +3,7 @@
   <div class="row">
     <% @playlists.each do |playlist| %>
       <div class="col-md-3 col-sm-6 mb-4">
-        <div class="card text-dark position-relative">
+        <div class="card-common card-playlist text-dark position-relative">
           <div class="card-header d-flex justify-content-between align-items-center p-2">
             <%= link_to 'x', playlist_path(playlist), method: :delete, data: { confirm: 'Are you sure?' }, class: 'btn btn-danger btn-sm' %>
             <h5 class="mb-0 ml-auto"><%= playlist.name %></h5>
@@ -23,7 +23,7 @@
       </div>
     <% end %>
     <div class="col-md-3 col-sm-6 mb-4">
-      <div class="card text-dark position-relative d-flex align-items-center justify-content-center">
+      <div class="card-common card-playlist text-dark position-relative d-flex align-items-center justify-content-center">
         <%= link_to new_playlist_path, class: 'btn btn-primary btn-lg' do %>
           <i class="bi bi-plus-lg"></i> <!-- Bootstrap icon for a plus sign -->
         <% end %>

@@ -6,10 +6,14 @@
   width: 200px;
 }
 
-.card {
+.card-common {
   display: flex;
   flex-direction: column;
-  height: 200px; /* Fixed height for the card */
+  border: 1px solid #dee2e6;
+}
+
+.card-playlist {
+  height: 200px; /* Fixed height for the playlist card */
 }
 
 .card-header {
@@ -52,4 +56,34 @@
 
 .card-header h5 {
   margin-left: auto;
+}
+
+/* Artist Card Specific Styles */
+.card-artist {
+  height: 100%; /* Ensures the artist card takes up the full height of its container */
+}
+
+.card-artist-body {
+  flex: 1; /* Allows the body to take up the remaining space within the card */
+  display: flex;
+  flex-direction: column;
+  justify-content: center; /* Centers the content vertically */
+  height: 90%;
+}
+
+.card-artist-footer {
+  height: 10%;
+}
+
+/* Table Styles */
+.table-hover tbody tr:hover {
+  background-color: #f1f1f1;
+}
+
+.table-striped tbody tr:nth-of-type(odd) {
+  background-color: #f9f9f9;
+}
+
+.table tbody tr {
+  height: 60px; /* Increase row height */
 }

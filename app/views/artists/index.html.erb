@@ -1,15 +1,17 @@
 <div class="container mt-4">
-  <h1 class="text-center mb-4">Artists</h1>
+  <h1 class="text-center">Artists</h1>
   <div class="row">
     <% @artists.each do |artist| %>
-      <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
-        <div class="card h-100 text-dark position-relative">
-          <div class="card-body d-flex flex-column justify-content-center">
-            <h5 class="card-title text-center"><%= link_to artist.name, artist_path(artist), class: 'stretched-link text-decoration-none text-dark' %></h5>
-          </div>
-          <div class="card-footer text-end">
-            <small class="text-muted"><%= artist.tracks.count %> tracks</small>
-          </div>
+      <div class="col-md-3 col-sm-6 mb-4">
+        <div class="card-common card-artist text-dark position-relative">
+          <%= link_to artist_path(artist), class: 'card-link' do %>
+            <div class="card-artist-body d-flex flex-column justify-content-center">
+              <h5 class="card-title text-center"><%= artist.name %></h5>
+            </div>
+            <div class="card-artist-footer d-flex justify-content-end align-items-center p-2">
+              <small class="text-muted"><%= artist.tracks.count %> tracks</small>
+            </div>
+          <% end %>
         </div>
       </div>
     <% end %>

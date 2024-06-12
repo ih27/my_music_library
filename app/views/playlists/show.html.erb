@@ -1,23 +1,28 @@
-<div class="container">
-  <div class="center-align">
-    <%= link_to 'Back to Playlists', playlists_path, class: 'btn waves-effect waves-light' %>
+<div class="container mt-4">
+  <!-- First Section: Playlist Card -->
+  <div class="card-common card-playlist text-dark position-relative mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center p-2">
+      <%= link_to 'x', playlist_path(@playlist), method: :delete, data: { confirm: 'Are you sure?' }, class: 'btn btn-danger btn-sm' %>
+      <h5 class="mb-0 ml-auto"><%= @playlist.name %></h5>
+    </div>
+
+    <% if @playlist.cover_art.attached? %>
+      <div class="card-img" style="background-image: url(<%= url_for(@playlist.cover_art) %>);"></div>
+    <% else %>
+      <div class="card-img" style="background-image: url('<%= asset_path('default_cover_art.jpg') %>');"></div>
+    <% end %>
+    <div class="card-footer d-flex justify-content-between align-items-center p-2">
+      <small><%= format_time(@playlist.tracks.sum(:time)) %></small>
+      <small><%= @playlist.tracks.count %> tracks</small>
+    </div>
   </div>
 
-  <h1 class="center-align"><%= @playlist.name %></h1>
-
-  <% if @playlist.cover_art.attached? %>
-    <div class="center-align">
-      <%= image_tag @playlist.cover_art, class: 'rounded img-fluid img-thumbnail' %>
-    </div>
-  <% else %>
-    <div class="center-align">
-      <%= image_tag 'default_cover_art.jpg', class: 'rounded img-fluid img-thumbnail' %>
-    </div>
-  <% end %>
-
-  <h2 class="center-align">Tracks</h2>
-  <table id="tracks-table" class="striped highlight responsive-table" data-controller="sortable" data-reorder-url="<%= reorder_tracks_playlist_path(@playlist) %>">
-    <thead>
+  <!-- Second Section: Tracks Table -->
+  <h2 class="text-center">Tracks</h2>
+  <table id="tracks-table" class="table table-striped table-hover"
+         data-controller="sortable"
+         data-reorder-url="<%= reorder_tracks_playlist_path(@playlist) %>">
+    <thead class="thead-dark">
     <tr>
       <th>Order</th>
       <th>Name</th>
@@ -35,7 +40,12 @@
       <tr data-id="<%= playlists_track.track.id %>">
         <td class="order-cell"><%= playlists_track.order %></td>
         <td><%= playlists_track.track.name %></td>
-        <td><%= playlists_track.track.artists.map(&:name).join(", ") %></td>
+        <td>
+          <% playlists_track.track.artists.each do |artist| %>
+            <%= link_to artist.name, artist_path(artist), class: 'text-decoration-none text-dark' %>
+            <%= ',' unless artist == playlists_track.track.artists.last %>
+          <% end %>
+        </td>
         <td><%= playlists_track.track.key %></td>
         <td><%= playlists_track.track.bpm %></td>
         <td><%= format_time(playlists_track.track.time) %></td>
@@ -46,7 +56,4 @@
     <% end %>
     </tbody>
   </table>
-  <div class="center-align">
-    <%= link_to 'Back to Playlists', playlists_path, class: 'btn waves-effect waves-light' %>
-  </div>
 </div>

@@ -5,3 +5,51 @@
   height: 200px;
   width: 200px;
 }
+
+.card {
+  display: flex;
+  flex-direction: column;
+  height: 200px; /* Fixed height for the card */
+}
+
+.card-header {
+  height: 20%;
+  background-color: white;
+  z-index: 1;
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+}
+
+.card-img {
+  height: 70%;
+  background-size: cover;
+  background-position: center;
+  flex-grow: 1;
+  border-radius: 0;
+}
+
+.card-footer {
+  height: 10%;
+  background-color: white;
+  z-index: 1;
+  position: relative;
+}
+
+.card-link {
+  text-decoration: none;
+  color: inherit;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.btn-danger {
+  position: absolute;
+  top: -10px;
+  left: -10px;
+}
+
+.card-header h5 {
+  margin-left: auto;
+}

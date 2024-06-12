@@ -1,25 +1,33 @@
-<div class="container">
-  <h1 class="center-align">Playlists</h1>
-  <div class="right-align">
-    <%= link_to 'Create New Playlist', new_playlist_path, class: 'btn waves-effect waves-light' %>
-  </div>
-  <table class="striped highlight responsive-table">
-    <thead>
-    <tr>
-      <th>Name</th>
-      <th>Actions</th>
-    </tr>
-    </thead>
-    <tbody>
+<div class="container mt-4">
+  <h1 class="text-center">Playlists</h1>
+  <div class="row">
     <% @playlists.each do |playlist| %>
-      <tr>
-        <td><%= link_to playlist.name, playlist_path(playlist) %></td>
-        <td>
-          <%= link_to 'Show', playlist_path(playlist), class: 'btn waves-effect waves-light' %>
-          <%= link_to 'Delete', playlist_path(playlist), method: :delete, data: { confirm: 'Are you sure?' }, class: 'btn waves-effect waves-light red' %>
-        </td>
-      </tr>
+      <div class="col-md-3 col-sm-6 mb-4">
+        <div class="card text-dark position-relative">
+          <div class="card-header d-flex justify-content-between align-items-center p-2">
+            <%= link_to 'x', playlist_path(playlist), method: :delete, data: { confirm: 'Are you sure?' }, class: 'btn btn-danger btn-sm' %>
+            <h5 class="mb-0 ml-auto"><%= playlist.name %></h5>
+          </div>
+          <%= link_to playlist_path(playlist), class: 'card-link' do %>
+            <% if playlist.cover_art.attached? %>
+              <div class="card-img" style="background-image: url(<%= url_for(playlist.cover_art) %>);"></div>
+            <% else %>
+              <div class="card-img" style="background-image: url('<%= asset_path('default_cover_art.jpg') %>');"></div>
+            <% end %>
+            <div class="card-footer d-flex justify-content-between align-items-center p-2">
+              <small><%= format_time(playlist.tracks.sum(:time)) %></small>
+              <small><%= playlist.tracks.count %> tracks</small>
+            </div>
+          <% end %>
+        </div>
+      </div>
     <% end %>
-    </tbody>
-  </table>
+    <div class="col-md-3 col-sm-6 mb-4">
+      <div class="card text-dark position-relative d-flex align-items-center justify-content-center">
+        <%= link_to new_playlist_path, class: 'btn btn-primary btn-lg' do %>
+          <i class="bi bi-plus-lg"></i> <!-- Bootstrap icon for a plus sign -->
+        <% end %>
+      </div>
+    </div>
+  </div>
 </div>

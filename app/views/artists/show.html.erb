@@ -19,6 +19,7 @@
           <thead>
           <tr>
             <th>Name</th>
+            <th>Artist(s)</th>
             <th>Key</th>
             <th>BPM</th>
             <th>Time</th>
@@ -31,6 +32,12 @@
           <% @artist.tracks.each do |track| %>
             <tr>
               <td><%= track.name %></td>
+              <td>
+                <% track.artists.each do |artist| %>
+                  <%= link_to artist.name, artist_path(artist), class: 'text-decoration-none text-dark' %>
+                  <%= ',' unless artist == track.artists.last %>
+                <% end %>
+              </td>
               <td><%= track.key %></td>
               <td><%= track.bpm %></td>
               <td><%= format_time(track.time) %></td>
@@ -43,13 +50,24 @@
         </table>
       </div>
 
-      <div class="card-text mt-4">
+      <div class="row">
         <h5>Playlists</h5>
-        <ul>
-          <% @playlists.each do |playlist| %>
-            <li><%= link_to playlist.name, playlist_path(playlist) %></li>
-          <% end %>
-        </ul>
+        <% @playlists.each do |playlist| %>
+          <div class="col-md-3 col-sm-6 mb-4">
+            <div class="card-common card-playlist text-dark position-relative">
+              <%= link_to playlist_path(playlist), class: 'card-link' do %>
+                <div class="card-header d-flex justify-content-between align-items-center p-2">
+                <h5 class="mb-0 ml-auto"><%= playlist.name %></h5>
+              </div>
+                <% if playlist.cover_art.attached? %>
+                  <div class="card-img" style="background-image: url(<%= url_for(playlist.cover_art) %>);"></div>
+                <% else %>
+                  <div class="card-img" style="background-image: url('<%= asset_path('default_cover_art.jpg') %>');"></div>
+                <% end %>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
       </div>
 
     </div>

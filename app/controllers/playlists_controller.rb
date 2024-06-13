@@ -42,7 +42,13 @@ class PlaylistsController < ApplicationController
   end
 
   def destroy
+    track_ids = @playlist.tracks.pluck(:id)
+    artist_ids = Artist.joins(:tracks).where(tracks: { id: track_ids }).pluck(:id).uniq
+
     @playlist.destroy
+    destroy_orphaned_tracks(track_ids)
+    destroy_orphaned_artists(artist_ids)
+
     redirect_to playlists_url, notice: 'Playlist was successfully deleted.'
   end
 
@@ -84,5 +90,33 @@ class PlaylistsController < ApplicationController
       filename: 'default_cover_art.jpg',
       content_type: 'image/jpg'
     )
+  end
+
+  def destroy_orphaned_tracks(track_ids)
+    Rails.logger.info "Track IDs before destruction: #{track_ids}"
+    track_ids.each do |track_id|
+      track = Track.find_by(id: track_id)
+      next unless track
+
+      Rails.logger.info "Checking track: #{track.id} - #{track.name} with playlists count: #{track.playlists.count}"
+      if track.playlists.empty?
+        Rails.logger.info "Destroying track: #{track.id} - #{track.name}"
+        track.destroy
+      end
+    end
+  end
+
+  def destroy_orphaned_artists(artist_ids)
+    Rails.logger.info "Artist IDs before destruction: #{artist_ids}"
+    artist_ids.each do |artist_id|
+      artist = Artist.find_by(id: artist_id)
+      next unless artist
+
+      Rails.logger.info "Checking artist: #{artist.id} - #{artist.name} with tracks count: #{artist.tracks.count}"
+      if artist.tracks.empty?
+        Rails.logger.info "Destroying artist: #{artist.id} - #{artist.name}"
+        artist.destroy
+      end
+    end
   end
 end

@@ -46,7 +46,7 @@
             <%= ',' unless artist == playlists_track.track.artists.last %>
           <% end %>
         </td>
-        <td><%= playlists_track.track.key&.name %></td>
+        <td><%= link_to playlists_track.track.key&.name, key_path(playlists_track.track.key), class: 'text-decoration-none text-dark' %></td>
         <td><%= playlists_track.track.bpm %></td>
         <td><%= format_time(playlists_track.track.time) %></td>
         <td><%= playlists_track.track.album %></td>

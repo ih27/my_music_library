@@ -1,0 +1,19 @@
+<div class="container mt-4">
+  <h1 class="text-center">Keys</h1>
+  <div class="row">
+    <% @keys.each do |key| %>
+      <div class="col-md-3 col-sm-6 mb-4">
+        <div class="card-common card-key text-dark position-relative">
+          <%= link_to key_path(key), class: 'card-link' do %>
+            <div class="card-key-body d-flex flex-column justify-content-center">
+              <h5 class="card-title text-center"><%= key.name %></h5>
+            </div>
+            <div class="card-key-footer d-flex justify-content-end align-items-center p-2">
+              <small class="text-muted"><%= key.tracks.count %> tracks</small>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</div>

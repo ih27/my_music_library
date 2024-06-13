@@ -11,9 +11,11 @@
 </head>
 
 <body>
+
+<!-- HEADER HERE -->
 <nav class="navbar navbar-expand-lg navbar-light bg-light">
   <div class="container-fluid">
-    <a class="navbar-brand" href="/">ismok's Music Archive</a>
+    <a class="navbar-brand" href="/">My Mix Collection</a>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
@@ -25,19 +27,37 @@
         <li class="nav-item">
           <%= link_to 'Artists', artists_path, class: 'nav-link' %>
         </li>
+        <li class="nav-item">
+          <%= link_to 'Keys', keys_path, class: 'nav-link' %>
+        </li>
       </ul>
     </div>
   </div>
 </nav>
 
 <div class="container mt-4">
+  <!-- FLASH MESSAGES GO HERE -->
   <% flash.each do |key, value| %>
     <div class="alert alert-<%= key == "notice" ? "success" : "danger" %> alert-dismissible fade show" role="alert">
       <%= value %>
       <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
   <% end %>
+
+  <!-- ACTUAL PAGES GO HERE -->
   <%= yield %>
+
 </div>
+
+<!-- FOOTER HERE -->
+<footer class="footer navbar-expand-lg navbar-light bg-light mt-4">
+  <div class="container-fluid">
+    <div class="d-flex justify-content-between w-100">
+      <span class="text-muted">Total Tracks in DB: <%= total_tracks_count %></span>
+      <span class="text-muted">Made with <span style="color: #e25555;">&hearts;</span> in Istanbul by <%= link_to 'ismok', 'https://soundcloud.com/ismok', target: '_blank' %></span>
+    </div>
+  </div>
+</footer>
+
 </body>
 </html>

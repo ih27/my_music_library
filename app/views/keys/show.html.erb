@@ -1,11 +1,11 @@
 <div class="container mt-4">
   <div class="card">
     <div class="card-body">
-      <h1 class="card-title text-center"><%= @artist.name %></h1>
+      <h1 class="card-title text-center"><%= @key.name %></h1>
 
       <div class="card-text mt-4">
         <h5>Total Tracks</h5>
-        <p><%= @artist.tracks.count %> tracks</p>
+        <p><%= @key.tracks.count %> tracks</p>
       </div>
 
       <div class="card-text mt-4">
@@ -29,7 +29,7 @@
           </tr>
           </thead>
           <tbody>
-          <% @artist.tracks.each do |track| %>
+          <% @key.tracks.each do |track| %>
             <tr>
               <td><%= track.name %></td>
               <td>
@@ -38,7 +38,7 @@
                   <%= ',' unless artist == track.artists.last %>
                 <% end %>
               </td>
-              <td><%= link_to track.key&.name, key_path(track.key), class: 'text-decoration-none text-dark' %></td>
+              <td><%= track.key&.name %></td>
               <td><%= track.bpm %></td>
               <td><%= format_time(track.time) %></td>
               <td><%= track.album %></td>
@@ -57,8 +57,8 @@
             <div class="card-common card-playlist text-dark position-relative">
               <%= link_to playlist_path(playlist), class: 'card-link' do %>
                 <div class="card-header d-flex justify-content-between align-items-center p-2">
-                <h5 class="mb-0 ml-auto"><%= playlist.name %></h5>
-              </div>
+                  <h5 class="mb-0 ml-auto"><%= playlist.name %></h5>
+                </div>
                 <% if playlist.cover_art.attached? %>
                   <div class="card-img" style="background-image: url(<%= url_for(playlist.cover_art) %>);"></div>
                 <% else %>

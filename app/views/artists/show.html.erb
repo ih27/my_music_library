@@ -38,7 +38,7 @@
                   <%= ',' unless artist == track.artists.last %>
                 <% end %>
               </td>
-              <td><%= track.key %></td>
+              <td><%= track.key&.name %></td>
               <td><%= track.bpm %></td>
               <td><%= format_time(track.time) %></td>
               <td><%= track.album %></td>

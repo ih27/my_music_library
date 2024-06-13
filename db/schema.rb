@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2024_06_05_121934) do
+ActiveRecord::Schema[7.1].define(version: 2024_06_13_094710) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -52,6 +52,13 @@ ActiveRecord::Schema[7.1].define(version: 2024_06_05_121934) do
     t.index ["track_id", "artist_id"], name: "index_artists_tracks_on_track_id_and_artist_id"
   end
 
+  create_table "keys", force: :cascade do |t|
+    t.string "name"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["name"], name: "index_keys_on_name", unique: true
+  end
+
   create_table "playlists", force: :cascade do |t|
     t.string "name", null: false
     t.datetime "created_at", null: false
@@ -68,7 +75,6 @@ ActiveRecord::Schema[7.1].define(version: 2024_06_05_121934) do
 
   create_table "tracks", force: :cascade do |t|
     t.string "name", null: false
-    t.string "key", null: false
     t.decimal "bpm", precision: 5, scale: 2, null: false
     t.integer "time"
     t.string "album"
@@ -76,6 +82,8 @@ ActiveRecord::Schema[7.1].define(version: 2024_06_05_121934) do
     t.date "date_added", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "key_id"
+    t.index ["key_id"], name: "index_tracks_on_key_id"
   end
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"

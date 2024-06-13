@@ -75,9 +75,10 @@ class PlaylistImporter
 
   def process_line(data)
     track_artists = data[2].split(', ')
+    key = Key.find_or_create_by!(name: data[4])
     track_attributes = {
       name: data[1],
-      key: data[4],
+      key: key,
       bpm: data[5].to_d,
       time: convert_time_to_seconds(data[6]),
       album: data[7].presence, # Handle potential empty album

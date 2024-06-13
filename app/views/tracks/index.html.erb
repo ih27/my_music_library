@@ -1,14 +1,14 @@
 <div class="container mt-4">
   <h1 class="text-center">Tracks</h1>
-  <table id="tracks-table" class="table table-striped table-hover">
+  <table id="tracks-table" class="table table-striped table-hover" data-controller="sort">
     <thead class="thead-dark">
     <tr>
-      <th>Name</th>
+      <th data-action="click->sort#sort" data-sort-column="name" class="sortable">Name <%= sort_icon('name') %></th>
       <th>Artist(s)</th>
-      <th>Key</th>
-      <th>BPM</th>
-      <th>Time</th>
-      <th>Album</th>
+      <th data-action="click->sort#sort" data-sort-column="keys.name" class="sortable">Key <%= sort_icon('keys.name') %></th>
+      <th data-action="click->sort#sort" data-sort-column="bpm" class="sortable">BPM <%= sort_icon('bpm') %></th>
+      <th data-action="click->sort#sort" data-sort-column="time" class="sortable">Time <%= sort_icon('time') %></th>
+      <th data-action="click->sort#sort" data-sort-column="album" class="sortable">Album <%= sort_icon('album') %></th>
       <th>Date Added</th>
       <th>Playlists</th>
     </tr>

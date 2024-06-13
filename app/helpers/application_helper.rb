@@ -8,4 +8,20 @@ module ApplicationHelper
   def total_tracks_count
     Track.count
   end
+
+  def sort_direction(column)
+    if params[:sort] == column
+      params[:direction] == "asc" ? "desc" : "asc"
+    else
+      "asc"
+    end
+  end
+
+  def sort_icon(column)
+    if params[:sort] == column
+      params[:direction] == "asc" ? "↑" : "↓"
+    else
+      ""
+    end
+  end
 end

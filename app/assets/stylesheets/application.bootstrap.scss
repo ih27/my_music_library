@@ -8,7 +8,7 @@
 }
 
 .card-playlist {
-  height: 200px; /* Fixed height for the playlist card */
+  height: 180px; /* Fixed height for the playlist card */
 }
 
 .card-header {
@@ -138,4 +138,12 @@ body {
   align-items: center;
   cursor: pointer;
   width: 100%;
+}
+
+.sortable {
+  cursor: pointer;
+}
+
+.sortable:hover {
+  text-decoration: underline;
 }

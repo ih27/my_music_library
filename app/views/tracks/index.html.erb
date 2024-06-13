@@ -10,7 +10,6 @@
       <th>Time</th>
       <th>Album</th>
       <th>Date Added</th>
-      <th>Comments</th>
       <th>Playlists</th>
     </tr>
     </thead>
@@ -29,7 +28,6 @@
         <td><%= format_time(track.time) %></td>
         <td><%= track.album %></td>
         <td><%= track.date_added %></td>
-        <td><%= track.comments %></td>
         <td>
           <% track.playlists.each do |playlist| %>
             <%= link_to playlist.name, playlist_path(playlist), class: 'text-decoration-none text-dark' %>

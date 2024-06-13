@@ -1,9 +1,5 @@
-<div class="container">
-  <div class="center-align">
-    <%= link_to 'Back to Playlists', playlists_path, class: 'btn waves-effect waves-light' %>
-  </div>
-
-  <h1 class="center-align">New Playlist</h1>
+<div class="container mt-4">
+  <h1 class="text-center">New Playlist</h1>
 
   <%= form_with model: @playlist, local: true, html: { multipart: true }, class: 'row' do |form| %>
     <% if @playlist.errors.any? %>
@@ -35,8 +31,4 @@
       <%= form.submit 'Create Playlist', class: 'btn waves-effect waves-light' %>
     </div>
   <% end %>
-
-  <div class="center-align">
-    <%= link_to 'Back to Playlists', playlists_path, class: 'btn waves-effect waves-light' %>
-  </div>
 </div>

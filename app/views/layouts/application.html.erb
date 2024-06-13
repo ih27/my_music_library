@@ -13,7 +13,7 @@
 <body>
 
 <!-- HEADER HERE -->
-<nav class="navbar navbar-expand-lg navbar-light bg-light">
+<nav class="navbar navbar-expand-lg navbar-light bg-light fixed-top">
   <div class="container-fluid">
     <a class="navbar-brand" href="/">My Mix Collection</a>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
@@ -23,6 +23,9 @@
       <ul class="navbar-nav">
         <li class="nav-item">
           <%= link_to 'Playlists', playlists_path, class: 'nav-link' %>
+        </li>
+        <li class="nav-item">
+          <%= link_to 'Tracks', tracks_path, class: 'nav-link' %>
         </li>
         <li class="nav-item">
           <%= link_to 'Artists', artists_path, class: 'nav-link' %>
@@ -50,12 +53,10 @@
 </div>
 
 <!-- FOOTER HERE -->
-<footer class="footer navbar-expand-lg navbar-light bg-light mt-4">
-  <div class="container-fluid">
-    <div class="d-flex justify-content-between w-100">
-      <span class="text-muted">Total Tracks in DB: <%= total_tracks_count %></span>
-      <span class="text-muted">Made with <span style="color: #e25555;">&hearts;</span> in Istanbul by <%= link_to 'ismok', 'https://soundcloud.com/ismok', target: '_blank' %></span>
-    </div>
+<footer class="footer navbar-expand-lg navbar-light bg-light fixed-bottom">
+  <div class="d-flex justify-content-between container-fluid">
+    <span class="text-muted">Total Tracks in DB: <%= total_tracks_count %></span>
+    <span class="text-muted">Made with <span style="color: #e25555;">&hearts;</span> in Istanbul by <%= link_to 'ismok', 'https://soundcloud.com/ismok', target: '_blank' %></span>
   </div>
 </footer>
 

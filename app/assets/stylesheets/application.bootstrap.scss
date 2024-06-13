@@ -99,3 +99,22 @@
   font-size: 1.2rem;
 }
 
+.fixed-top {
+  position: fixed;
+  top: 0;
+  width: 100%;
+  z-index: 1030; /* Adjust the z-index as needed */
+}
+
+.fixed-bottom {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  z-index: 1030; /* Adjust the z-index as needed */
+}
+
+body {
+  padding-top: 70px; /* Adjust based on the height of your navbar */
+  padding-bottom: 70px; /* Adjust based on the height of your footer */
+}
+

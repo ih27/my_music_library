@@ -6,26 +6,32 @@ class PlaylistsController < ApplicationController
   end
 
   def create
-    Rails.logger.info "Params received: #{params.inspect}"
-    file = params[:playlist][:file]
-    cover_art = params[:playlist][:cover_art]
+    @playlist = Playlist.new
+    if params[:playlist].present?
+      Rails.logger.info "Params received: #{params.inspect}"
+      file = playlist_params[:file]
+      cover_art = playlist_params[:cover_art]
 
-    if file.present?
-      # Extract the name from the filename (without the extension)
-      playlist_name = File.basename(file.original_filename, File.extname(file.original_filename))
-      @playlist = Playlist.new(name: playlist_name)
+      if file.present?
+        # Extract the name from the filename (without the extension)
+        playlist_name = File.basename(file.original_filename, File.extname(file.original_filename))
+        @playlist = Playlist.new(name: playlist_name)
 
-      if cover_art.present?
-        @playlist.cover_art.attach(cover_art)
-      end
-      
-      importer = PlaylistImporter.new(@playlist, file)
-      if importer.call
-        attach_default_cover_art unless @playlist.cover_art.attached?
-        redirect_to @playlist, notice: 'Playlist was successfully created.'
+        if cover_art.present?
+          @playlist.cover_art.attach(cover_art)
+        end
+
+        importer = PlaylistImporter.new(@playlist, file)
+        if importer.call
+          attach_default_cover_art unless @playlist.cover_art.attached?
+          redirect_to @playlist, notice: 'Playlist was successfully created.'
+        else
+          Rails.logger.info "Playlist import failed: Duplicate playlist detected or invalid data."
+          flash.now[:alert] = 'Duplicate playlist detected or invalid data.'
+          render :new, status: :unprocessable_entity
+        end
       else
-        Rails.logger.info "Playlist import failed: Duplicate playlist detected or invalid data."
-        flash.now[:alert] = 'Duplicate playlist detected or invalid data.'
+        flash.now[:alert] = 'File is required to create a playlist.'
         render :new, status: :unprocessable_entity
       end
     else

@@ -113,3 +113,29 @@ body {
   padding-bottom: 70px; /* Adjust based on the height of your footer */
 }
 
+.form-control-file {
+  display: none;
+}
+
+.playlist-btn {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  width: 100%;
+  margin-bottom: 15px;
+}
+
+.playlist-btn span {
+  width: 100%;
+  text-align: center;
+}
+
+.playlist-btn-primary {
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  width: 100%;
+}

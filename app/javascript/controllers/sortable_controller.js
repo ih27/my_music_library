@@ -1,5 +1,3 @@
-// app/javascript/controllers/sortable_controller.js
-
 import { Controller } from "@hotwired/stimulus";
 import Sortable from "sortablejs";
 

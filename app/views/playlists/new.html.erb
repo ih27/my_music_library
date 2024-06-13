@@ -1,34 +1,42 @@
-<div class="container mt-4">
+<div class="container mt-4" data-controller="fileselector">
   <h1 class="text-center">New Playlist</h1>
 
-  <%= form_with model: @playlist, local: true, html: { multipart: true }, class: 'row' do |form| %>
-    <% if @playlist.errors.any? %>
-      <div id="error_explanation" class="card-panel red lighten-4">
-        <h2><%= pluralize(@playlist.errors.count, "error") %> prohibited this playlist from being saved:</h2>
-        <ul>
-          <% @playlist.errors.full_messages.each do |message| %>
-            <li><%= message %></li>
-          <% end %>
-        </ul>
-      </div>
-    <% end %>
+  <div class="row justify-content-center">
+    <div class="col-md-6">
+      <%= form_with model: @playlist, local: true, html: { multipart: true }, class: 'row g-3' do |form| %>
+        <% if @playlist.errors.any? %>
+          <div id="error_explanation" class="alert alert-danger col-12">
+            <h2><%= pluralize(@playlist.errors.count, "error") %> prohibited this playlist from being saved:</h2>
+            <ul>
+              <% @playlist.errors.full_messages.each do |message| %>
+                <li><%= message %></li>
+              <% end %>
+            </ul>
+          </div>
+        <% end %>
 
-    <div class="file-field input-field col s12">
-      <div class="btn">
-        <span>Cover Art</span>
-        <%= form.file_field :cover_art %>
-      </div>
-    </div>
+        <div class="col-12">
+          <div class="mb-3">
+            <label class="btn btn-secondary playlist-btn">
+              <span data-fileselector-target="coverArtLabel">Select Cover Art</span>
+              <%= form.file_field :cover_art, class: 'form-control-file', data: { fileselector_target: "coverArt" } %>
+            </label>
+          </div>
+        </div>
 
-    <div class="file-field input-field col s12">
-      <div class="btn">
-        <span>Playlist File</span>
-        <%= form.file_field :file, required: true %>
-      </div>
-    </div>
+        <div class="col-12">
+          <div class="mb-3">
+            <label class="btn btn-secondary playlist-btn">
+              <span data-fileselector-target="playlistFileLabel">Select Playlist File</span>
+              <%= form.file_field :file, class: 'form-control-file', data: { fileselector_target: "playlistFile" } %>
+            </label>
+          </div>
+        </div>
 
-    <div class="col s12">
-      <%= form.submit 'Create Playlist', class: 'btn waves-effect waves-light' %>
+        <div class="col-12 text-center">
+          <%= form.submit 'Create Playlist', class: 'btn btn-primary playlist-btn-primary' %>
+        </div>
+      <% end %>
     </div>
-  <% end %>
+  </div>
 </div>

@@ -152,7 +152,7 @@ require 'pagy/extras/bootstrap'
 
 # Trim extra: Remove the page=1 param from links
 # See https://ddnexus.github.io/pagy/docs/extras/trim
-# require 'pagy/extras/trim'
+require 'pagy/extras/trim'
 # set to false only if you want to make :trim_extra an opt-in variable
 # Pagy::DEFAULT[:trim_extra] = false # default true
 

@@ -147,3 +147,24 @@ body {
 .sortable:hover {
   text-decoration: underline;
 }
+
+.input-group .form-control.pr-5 {
+  padding-right: 2.5rem; /* Space for the clear button */
+}
+
+.input-group .btn {
+  padding: 0;
+  height: 1.5rem;
+  width: 1.5rem;
+  font-size: 1rem;
+  line-height: 1.5;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.input-group .btn-outline-secondary {
+  right: 10px;
+  z-index: 2;
+}
+

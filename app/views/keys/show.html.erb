@@ -15,20 +15,30 @@
 
       <div class="card-text mt-4">
         <h5>Tracks</h5>
-        <table class="table table-striped">
-          <thead>
+        <!-- SEARCH BAR -->
+        <%= form_with(url: key_path(@key), method: :get, local: true, class: 'mb-3', data: { controller: 'search' }) do %>
+          <div class="input-group position-relative">
+            <%= text_field_tag :search, params[:search], class: 'form-control pr-5', placeholder: 'Search tracks...', data: { search_target: 'input' } %>
+            <button type="button" class="btn btn-outline-secondary position-absolute top-50 end-0 translate-middle-y" id="clear-search" data-action="click->search#clear">&times;</button>
+          </div>
+        <% end %>
+
+        <!-- TABLE -->
+        <table id="tracks-table" class="table table-striped table-hover" data-controller="sort">
+          <thead class="thead-dark">
           <tr>
-            <th>Name</th>
-            <th>Artist(s)</th>
-            <th>Key</th>
-            <th>BPM</th>
-            <th>Time</th>
-            <th>Album</th>
+            <th data-action="click->sort#sort" data-sort-column="name" class="sortable">Name <%= sort_icon('name') %></th>
+            <th data-action="click->sort#sort" data-sort-column="artists.name" class="sortable">Artist(s) <%= sort_icon('artists.name') %></th>
+            <th data-action="click->sort#sort" data-sort-column="keys.name" class="sortable">Key <%= sort_icon('keys.name') %></th>
+            <th data-action="click->sort#sort" data-sort-column="bpm" class="sortable">BPM <%= sort_icon('bpm') %></th>
+            <th data-action="click->sort#sort" data-sort-column="time" class="sortable">Time <%= sort_icon('time') %></th>
+            <th data-action="click->sort#sort" data-sort-column="album" class="sortable">Album <%= sort_icon('album') %></th>
             <th>Date Added</th>
+            <th data-action="click->sort#sort" data-sort-column="playlists.name" class="sortable">Playlists <%= sort_icon('playlists.name') %></th>
           </tr>
           </thead>
           <tbody>
-          <% @key.tracks.each do |track| %>
+          <% @tracks.each do |track| %>
             <tr>
               <td><%= track.name %></td>
               <td>
@@ -37,15 +47,26 @@
                   <%= ',' unless artist == track.artists.last %>
                 <% end %>
               </td>
-              <td><%= track.key&.name %></td>
+              <td><%= link_to track.key&.name, key_path(track.key), class: 'text-decoration-none text-dark' if track.key %></td>
               <td><%= track.bpm %></td>
               <td><%= format_time(track.time) %></td>
               <td><%= track.album %></td>
               <td><%= track.date_added %></td>
+              <td>
+                <% track.playlists.each do |playlist| %>
+                  <%= link_to playlist.name, playlist_path(playlist), class: 'text-decoration-none text-dark' %>
+                  <%= ',' unless playlist == track.playlists.last %>
+                <% end %>
+              </td>
             </tr>
           <% end %>
           </tbody>
         </table>
+
+        <!-- PAGINATION -->
+        <div class="d-flex justify-content-center">
+          <%== pagy_bootstrap_nav(@pagy) if @pagy.pages > 1 %>
+        </div>
       </div>
 
       <div class="row">

@@ -2,6 +2,10 @@ class TracksController < ApplicationController
   def index
     tracks = Track.all.includes(:artists, :key, :playlists)
 
+    if params[:search].present?
+      tracks = tracks.search(params[:search])
+    end
+
     if params[:sort].present? && params[:direction].present?
       column = params[:sort]
       direction = params[:direction]

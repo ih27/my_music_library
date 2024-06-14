@@ -1,5 +1,15 @@
 <div class="container mt-4">
   <h1 class="text-center">Tracks</h1>
+  <!-- SEARCH BAR -->
+  <%= form_with(url: tracks_path, method: :get, local: true, class: 'mb-3') do %>
+    <div class="input-group">
+      <%= text_field_tag :search, params[:search], class: 'form-control', placeholder: 'Search tracks...' %>
+      <div class="input-group-append">
+        <%= submit_tag 'Search', class: 'btn btn-primary' %>
+      </div>
+    </div>
+  <% end %>
+  <!-- TABLE -->
   <table id="tracks-table" class="table table-striped table-hover" data-controller="sort">
     <thead class="thead-dark">
     <tr>
@@ -38,7 +48,7 @@
     <% end %>
     </tbody>
   </table>
-
+  <!-- PAGINATION -->
   <div class="d-flex justify-content-center">
     <%== pagy_bootstrap_nav(@pagy) if @pagy.pages > 1 %>
   </div>

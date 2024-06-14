@@ -1,14 +1,13 @@
 <div class="container mt-4">
   <h1 class="text-center">Tracks</h1>
   <!-- SEARCH BAR -->
-  <%= form_with(url: tracks_path, method: :get, local: true, class: 'mb-3') do %>
-    <div class="input-group">
-      <%= text_field_tag :search, params[:search], class: 'form-control', placeholder: 'Search tracks...' %>
-      <div class="input-group-append">
-        <%= submit_tag 'Search', class: 'btn btn-primary' %>
-      </div>
+  <%= form_with(url: tracks_path, method: :get, local: true, class: 'mb-3', data: { controller: 'search' }) do %>
+    <div class="input-group position-relative">
+      <%= text_field_tag :search, params[:search], class: 'form-control pr-5', placeholder: 'Search tracks...', data: { search_target: 'input' } %>
+      <button type="button" class="btn btn-outline-secondary position-absolute top-50 end-0 translate-middle-y" id="clear-search">&times;</button>
     </div>
   <% end %>
+
   <!-- TABLE -->
   <table id="tracks-table" class="table table-striped table-hover" data-controller="sort">
     <thead class="thead-dark">

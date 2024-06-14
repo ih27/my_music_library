@@ -13,6 +13,8 @@ class TracksController < ApplicationController
         @tracks = @tracks.order("#{column} #{direction}")
       end
     end
+
+    @pagy, @tracks = pagy(@tracks) # Use pagy_array for array pagination
   end
 
   private

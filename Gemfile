@@ -61,3 +61,6 @@ end
 
 # Character encoding detection
 gem "charlock_holmes"
+
+# Pagination pearl, very performant
+gem "pagy"

@@ -31,7 +31,20 @@ class TracksController < ApplicationController
     end
   end
 
+  def upload_audio
+    @track = Track.find(params[:id])
+    if @track.update(audio_file_params)
+      redirect_to tracks_path, notice: 'Audio file was successfully uploaded.'
+    else
+      redirect_to tracks_path, alert: 'Failed to upload audio file.'
+    end
+  end
+
   private
+
+  def audio_file_params
+    params.require(:track).permit(:audio_file)
+  end
 
   def natural_sort_key(key)
     key.to_s.split(/(\d+)/).map { |e| e =~ /\d/ ? e.to_i : e }

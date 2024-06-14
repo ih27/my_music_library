@@ -1,5 +1,6 @@
 <div class="container mt-4">
   <h1 class="text-center">Tracks</h1>
+
   <!-- SEARCH BAR -->
   <%= form_with(url: tracks_path, method: :get, local: true, class: 'mb-3', data: { controller: 'search' }) do %>
     <div class="input-group position-relative">
@@ -20,6 +21,7 @@
       <th data-action="click->sort#sort" data-sort-column="album" class="sortable">Album <%= sort_icon('album') %></th>
       <th>Date Added</th>
       <th data-action="click->sort#sort" data-sort-column="playlists.name" class="sortable">Playlists <%= sort_icon('playlists.name') %></th>
+      <th>Audio</th>
     </tr>
     </thead>
     <tbody>
@@ -43,6 +45,16 @@
             <%= ',' unless playlist == track.playlists.last %>
           <% end %>
         </td>
+        <td>
+          <% if track.audio_file.attached? %>
+            <audio controls>
+              <source src="<%= url_for(track.audio_file) %>" type="<%= track.audio_file.content_type %>">
+              Your browser does not support the audio element.
+            </audio>
+          <% else %>
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#uploadModal" data-track-id="<%= track.id %>">Upload Audio</button>
+          <% end %>
+        </td>
       </tr>
     <% end %>
     </tbody>
@@ -52,4 +64,36 @@
     <%== pagy_bootstrap_nav(@pagy) if @pagy.pages > 1 %>
   </div>
 </div>
+
+<!-- Upload Modal -->
+<div class="modal fade" id="uploadModal" tabindex="-1" role="dialog" aria-labelledby="uploadModalLabel" aria-hidden="true" data-controller="upload fileselector" data-upload-target="modal" data-action="show.bs.modal->upload#show">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header d-flex justify-content-between align-items-center w-100">
+        <h5 class="modal-title mx-auto" id="uploadModalLabel">Upload Audio File</h5>
+        <button type="button" class="close position-absolute end-0 me-2" data-bs-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <%= form_with(url: '', local: true, class: 'mb-3', data: { target: 'upload.form' }) do |form| %>
+          <%= form.hidden_field :track_id, id: 'track-id', name: 'track[id]', data: { upload_target: 'trackId' } %>
+          <div class="form-group mb-3">
+            <label class="btn btn-secondary playlist-btn">
+              <span data-fileselector-target="audioFileLabel">Select Audio File</span>
+              <%= form.file_field :audio_file, class: 'form-control-file', name: 'track[audio_file]', data: { action: 'change->fileselector#updateAudioFileLabel', fileselector_target: "audioFile" } %>
+            </label>
+          </div>
+          <div class="form-group text-center">
+            <%= form.submit 'Upload', class: 'btn btn-primary playlist-btn-primary' %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+
 

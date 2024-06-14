@@ -65,6 +65,8 @@ GEM
       activerecord (= 7.1.3.4)
       activesupport (= 7.1.3.4)
       marcel (~> 1.0)
+    activestorage-validator (0.4.0)
+      rails (>= 6.1.0)
     activesupport (7.1.3.4)
       base64
       bigdecimal
@@ -239,6 +241,7 @@ PLATFORMS
   x86_64-linux
 
 DEPENDENCIES
+  activestorage-validator
   bootsnap
   charlock_holmes
   cssbundling-rails

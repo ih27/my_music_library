@@ -32,6 +32,7 @@
       <th>Time</th>
       <th>Album</th>
       <th>Date Added</th>
+      <th>Audio</th>
     </tr>
     </thead>
     <tbody>
@@ -50,6 +51,14 @@
         <td><%= format_time(playlists_track.track.time) %></td>
         <td><%= playlists_track.track.album %></td>
         <td><%= playlists_track.track.date_added %></td>
+        <td>
+          <% if playlists_track.track.audio_file.attached? %>
+            <audio controls>
+              <source src="<%= url_for(playlists_track.track.audio_file) %>" type="<%= playlists_track.track.audio_file.content_type %>">
+              Your browser does not support the audio element.
+            </audio>
+          <% end %>
+        </td>
       </tr>
     <% end %>
     </tbody>

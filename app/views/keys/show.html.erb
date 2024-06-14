@@ -35,6 +35,7 @@
             <th data-action="click->sort#sort" data-sort-column="album" class="sortable">Album <%= sort_icon('album') %></th>
             <th>Date Added</th>
             <th data-action="click->sort#sort" data-sort-column="playlists.name" class="sortable">Playlists <%= sort_icon('playlists.name') %></th>
+            <th>Audio</th>
           </tr>
           </thead>
           <tbody>
@@ -56,6 +57,14 @@
                 <% track.playlists.each do |playlist| %>
                   <%= link_to playlist.name, playlist_path(playlist), class: 'text-decoration-none text-dark' %>
                   <%= ',' unless playlist == track.playlists.last %>
+                <% end %>
+              </td>
+              <td>
+                <% if track.audio_file.attached? %>
+                  <audio controls>
+                    <source src="<%= url_for(track.audio_file) %>" type="<%= track.audio_file.content_type %>">
+                    Your browser does not support the audio element.
+                  </audio>
                 <% end %>
               </td>
             </tr>

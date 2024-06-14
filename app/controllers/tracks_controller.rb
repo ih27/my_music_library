@@ -43,7 +43,7 @@ class TracksController < ApplicationController
   private
 
   def audio_file_params
-    params.require(:track).permit(:audio_file)
+    params.require(:track).permit(:id, :audio_file)
   end
 
   def natural_sort_key(key)

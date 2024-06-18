@@ -76,7 +76,7 @@
         </button>
       </div>
       <div class="modal-body">
-        <%= form_with(url: '', local: true, class: 'mb-3', data: { target: 'upload.form' }) do |form| %>
+        <%= form_with(url: '', local: true, class: 'mb-3', data: { upload_target: 'form' }) do |form| %>
           <%= form.hidden_field :track_id, id: 'track-id', name: 'track[id]', data: { upload_target: 'trackId' } %>
           <div class="form-group mb-3">
             <label class="btn btn-secondary playlist-btn">
@@ -92,8 +92,3 @@
     </div>
   </div>
 </div>
-
-
-
-
-

@@ -4,10 +4,11 @@ export default class extends Controller {
     static targets = ["coverArt", "coverArtLabel", "playlistFile", "playlistFileLabel", "audioFile", "audioFileLabel"]
 
     connect() {
-        this.coverArtTarget.addEventListener("change", this.updateCoverArtLabel.bind(this));
-        this.playlistFileTarget.addEventListener("change", this.updatePlaylistFileLabel.bind(this));
         if (this.hasAudioFileTarget) {
             this.audioFileTarget.addEventListener("change", this.updateAudioFileLabel.bind(this));
+        } else {
+            this.coverArtTarget.addEventListener("change", this.updateCoverArtLabel.bind(this));
+            this.playlistFileTarget.addEventListener("change", this.updatePlaylistFileLabel.bind(this));
         }
     }
 

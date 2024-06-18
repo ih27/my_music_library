@@ -2,7 +2,7 @@ class KeysController < ApplicationController
   before_action :set_key, only: [:show]
 
   def index
-    @keys = Key.all
+    @keys = Key.all.sort_by { |key| natural_sort_key(key.name) }
   end
 
   def show
@@ -43,5 +43,9 @@ class KeysController < ApplicationController
 
   def set_key
     @key = Key.find(params[:id])
+  end
+
+  def natural_sort_key(key)
+    key.to_s.split(/(\d+)/).map { |e| e =~ /\d/ ? e.to_i : e }
   end
 end

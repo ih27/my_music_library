@@ -1,9 +1,13 @@
 class PlaylistImporter
+  REQUIRED_HEADERS = %w[# Track\ Title Artist BPM Date\ Added]
+  OPTIONAL_HEADERS = %w[Key Time Album]
+
   def initialize(playlist, file)
     @playlist = playlist
     @file = file
     @track_ids = []
     @tracks_data = []
+    @headers_map = {}
   end
 
   def call
@@ -29,14 +33,12 @@ class PlaylistImporter
           track.artists << artist unless track.artists.include?(artist)
         end
 
-        # Ensure order is set and log detailed information before creating PlaylistsTrack
         order = track_data[:order] || index + 1
         Rails.logger.info "Creating PlaylistsTrack with playlist_id: #{@playlist.id}, track_id: #{track.id}, order: #{order}"
-        
-        # Create PlaylistsTrack and handle potential validation errors
+
         playlists_track = PlaylistsTrack.new(playlist: @playlist, track: track, order: order)
         Rails.logger.info "PlaylistsTrack attributes: #{playlists_track.attributes.inspect}"
-        
+
         unless playlists_track.save
           Rails.logger.error "PlaylistsTrack validation failed: #{playlists_track.errors.full_messages.join(', ')}"
           raise ActiveRecord::RecordInvalid.new(playlists_track)
@@ -49,18 +51,20 @@ class PlaylistImporter
     false
   end
 
-
   private
 
   def parse_file
     file_content = @file.read
     detected_encoding = detect_encoding(file_content)
     sanitized_content = sanitize_input(file_content, detected_encoding)
-    lines = sanitized_content.split("\n").drop(1) # Skip the header line
+    lines = sanitized_content.split("\n")
+
+    # Parse headers
+    parse_headers(lines.shift)
 
     lines.each do |line|
       data = line.split("\t")
-      next if data.size < 9 # Skip lines that don't have enough data
+      next if data.size < @headers_map.size # Skip lines that don't have enough data
 
       begin
         track_data = process_line(data)
@@ -73,18 +77,36 @@ class PlaylistImporter
     end
   end
 
+  def parse_headers(header_line)
+    headers = header_line.split("\t")
+
+    REQUIRED_HEADERS.each do |required_header|
+      unless headers.include?(required_header)
+        raise "Missing required header: #{required_header}"
+      end
+    end
+
+    (REQUIRED_HEADERS + OPTIONAL_HEADERS).each do |header|
+      index = headers.index(header)
+      @headers_map[header] = index if index
+    end
+  end
+
   def process_line(data)
-    track_artists = data[2].split(', ')
-    key = Key.find_or_create_by!(name: data[4])
+    track_artists = data[@headers_map['Artist']].split(', ')
+    key_name = data[@headers_map['Key']] if @headers_map['Key']
+    key = Key.find_or_create_by!(name: key_name) if key_name.present?
+
     track_attributes = {
-      name: data[1],
-      key: key,
-      bpm: data[5].to_d,
-      time: convert_time_to_seconds(data[6]),
-      album: data[7].presence, # Handle potential empty album
-      date_added: Date.parse(data[8])
+      name: data[@headers_map['Track Title']],
+      bpm: data[@headers_map['BPM']].to_d,
+      date_added: Date.parse(data[@headers_map['Date Added']])
     }
-    order = data[0].to_i
+    track_attributes[:key] = key if key
+    track_attributes[:time] = convert_time_to_seconds(data[@headers_map['Time']]) if @headers_map['Time']
+    track_attributes[:album] = data[@headers_map['Album']].presence if @headers_map['Album']
+
+    order = data[@headers_map['#']].to_i
     { track_attributes: track_attributes, artists: track_artists, order: order }
   end
 
@@ -98,6 +120,7 @@ class PlaylistImporter
   end
 
   def convert_time_to_seconds(time_str)
+    return nil unless time_str
     mins, secs = time_str.split(':').map(&:to_i)
     mins * 60 + secs
   end

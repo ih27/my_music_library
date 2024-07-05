@@ -56,11 +56,14 @@ class PlaylistImporter
   def parse_file
     file_content = @file.read
     detected_encoding = detect_encoding(file_content)
+    puts "Detected encoding: #{detected_encoding}"
     sanitized_content = sanitize_input(file_content, detected_encoding)
     lines = sanitized_content.split("\n")
 
     # Parse headers
-    parse_headers(lines.shift)
+    header_line = lines.shift
+    puts "Headers: #{header_line.inspect}"
+    parse_headers(header_line)
 
     lines.each do |line|
       data = line.split("\t")
@@ -78,10 +81,10 @@ class PlaylistImporter
   end
 
   def parse_headers(header_line)
-    headers = header_line.split("\t")
+    headers = header_line.split("\t").map { |h| h.strip.gsub(/\A[\u{FEFF}\u{200B}]+/, '') }
 
     REQUIRED_HEADERS.each do |required_header|
-      unless headers.include?(required_header)
+      unless headers.any? { |h| h == required_header }
         raise "Missing required header: #{required_header}"
       end
     end
@@ -111,12 +114,12 @@ class PlaylistImporter
   end
 
   def detect_encoding(content)
-    detection = CharlockHolmes::EncodingDetector.detect(content)
-    detection[:encoding]
+    CharlockHolmes::EncodingDetector.detect(content)[:encoding]
   end
 
   def sanitize_input(input, encoding)
-    input.force_encoding(encoding).encode('UTF-8', invalid: :replace, undef: :replace, replace: '')
+    content = input.force_encoding(encoding).encode('UTF-8', invalid: :replace, undef: :replace, replace: '')
+    content.gsub(/\A\xEF\xBB\xBF/, '') # Remove BOM if present
   end
 
   def convert_time_to_seconds(time_str)

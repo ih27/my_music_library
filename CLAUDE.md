@@ -4,10 +4,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a Rails 7.1 music archive application for managing DJ playlists. It allows importing playlists from tab-delimited files, managing tracks with metadata (BPM, key, artists), and organizing music collections.
+This is a Rails 8.1 music archive application for managing DJ playlists. It allows importing playlists from tab-delimited files, managing tracks with metadata (BPM, key, artists), and organizing music collections.
 
-Ruby version: 3.2.2
-Rails version: 7.1.3+
+Ruby version: 3.3.10
+Rails version: 8.1.0
 
 ## Development Commands
 
@@ -104,7 +104,7 @@ yarn install
 - Required headers: `#`, `Track Title`, `Artist`, `BPM`, `Date Added`
 - Optional headers: `Key`, `Time`, `Album`
 - Handles flexible column ordering (headers can be in any order)
-- Uses CharLock Holmes for encoding detection (handles non-UTF-8 files)
+- Uses rchardet (pure Ruby) for encoding detection (handles non-UTF-8 files)
 - Processes BOM (Byte Order Mark) removal
 - Creates/finds tracks, artists, and keys during import
 - Validates duplicate playlists by comparing track IDs
@@ -138,7 +138,7 @@ yarn install
 ## Important Implementation Details
 
 ### Character Encoding
-The playlist importer handles various character encodings using the `charlock_holmes` gem. Files are detected for encoding and converted to UTF-8 with replacement characters for invalid sequences.
+The playlist importer handles various character encodings using the `rchardet` gem (pure Ruby, no native extensions). Files are detected for encoding and converted to UTF-8 with replacement characters for invalid sequences.
 
 ### Orphaned Record Cleanup
 When deleting a playlist, the controller checks for orphaned tracks (tracks in no playlists) and orphaned artists (artists with no tracks) and removes them to keep the database clean.

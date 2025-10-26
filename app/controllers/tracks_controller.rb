@@ -31,6 +31,10 @@ class TracksController < ApplicationController
     end
   end
 
+  def show
+    @track = Track.includes(:artists, :key, :playlists).find(params[:id])
+  end
+
   def upload_audio
     @track = Track.find(params[:id])
     if @track.update(audio_file_params)
@@ -38,6 +42,19 @@ class TracksController < ApplicationController
     else
       redirect_to tracks_path, alert: 'Failed to upload audio file.'
     end
+  end
+
+  def compatible
+    @track = Track.includes(:artists, :key).find(params[:id])
+    bpm_range = params[:bpm_range].to_i if params[:bpm_range].present?
+
+    compatible_tracks = @track.find_compatible(bpm_range: bpm_range)
+
+    render json: {
+      perfect: compatible_tracks[:perfect].as_json(include: { artists: { only: [:name] }, key: { only: [:name] } }),
+      smooth: compatible_tracks[:smooth].as_json(include: { artists: { only: [:name] }, key: { only: [:name] } }),
+      energy_boost: compatible_tracks[:energy_boost].as_json(include: { artists: { only: [:name] }, key: { only: [:name] } })
+    }
   end
 
   private

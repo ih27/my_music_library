@@ -11,6 +11,29 @@ class Playlist < ApplicationRecord
     tracks.order(:id).pluck(:id).join('-')
   end
 
+  # Analyze harmonic transitions between consecutive tracks
+  #
+  # @return [Array<Hash>] Array of transition hashes with :from, :to, :quality, :indicator
+  def analyze_transitions
+    analysis = HarmonicMixingService.analyze_playlist_transitions(self)
+    analysis[:transitions]
+  end
+
+  # Calculate overall harmonic flow score for this playlist
+  #
+  # @return [Float] Score from 0-100
+  def harmonic_flow_score
+    analysis = HarmonicMixingService.analyze_playlist_transitions(self)
+    analysis[:score]
+  end
+
+  # Get full harmonic analysis including transitions and statistics
+  #
+  # @return [Hash] Complete analysis with :transitions, :score, :total_transitions, :quality_counts
+  def harmonic_analysis
+    HarmonicMixingService.analyze_playlist_transitions(self)
+  end
+
   private
 
   def attach_default_cover_art

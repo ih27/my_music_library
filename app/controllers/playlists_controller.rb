@@ -41,6 +41,7 @@ class PlaylistsController < ApplicationController
   end
 
   def show
+    @harmonic_analysis = @playlist.harmonic_analysis
   end
 
   def index

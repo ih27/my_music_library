@@ -1,0 +1,129 @@
+<div class="container mt-4">
+  <div class="row">
+    <!-- Track Details -->
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-header">
+          <h3><%= @track.name %></h3>
+        </div>
+        <div class="card-body">
+          <dl class="row">
+            <dt class="col-sm-4">Artist(s):</dt>
+            <dd class="col-sm-8">
+              <% @track.artists.each do |artist| %>
+                <%= link_to artist.name, artist_path(artist), class: 'text-decoration-none' %>
+                <%= ',' unless artist == @track.artists.last %>
+              <% end %>
+            </dd>
+
+            <dt class="col-sm-4">Key:</dt>
+            <dd class="col-sm-8">
+              <% if @track.key %>
+                <%= link_to @track.key.name, key_path(@track.key), class: 'badge bg-info text-decoration-none' %>
+              <% else %>
+                <span class="text-muted">N/A</span>
+              <% end %>
+            </dd>
+
+            <dt class="col-sm-4">BPM:</dt>
+            <dd class="col-sm-8"><span class="badge bg-secondary"><%= @track.bpm %></span></dd>
+
+            <dt class="col-sm-4">Time:</dt>
+            <dd class="col-sm-8"><%= format_time(@track.time) %></dd>
+
+            <dt class="col-sm-4">Album:</dt>
+            <dd class="col-sm-8"><%= @track.album || 'N/A' %></dd>
+
+            <dt class="col-sm-4">Date Added:</dt>
+            <dd class="col-sm-8"><%= @track.date_added %></dd>
+
+            <dt class="col-sm-4">Playlists:</dt>
+            <dd class="col-sm-8">
+              <% if @track.playlists.any? %>
+                <% @track.playlists.each do |playlist| %>
+                  <%= link_to playlist.name, playlist_path(playlist), class: 'text-decoration-none' %>
+                  <%= ',' unless playlist == @track.playlists.last %>
+                <% end %>
+              <% else %>
+                <span class="text-muted">None</span>
+              <% end %>
+            </dd>
+          </dl>
+
+          <!-- Audio Player -->
+          <% if @track.audio_file.attached? %>
+            <div class="mt-3">
+              <audio controls class="w-100">
+                <source src="<%= url_for(@track.audio_file) %>" type="<%= @track.audio_file.content_type %>">
+                Your browser does not support the audio element.
+              </audio>
+            </div>
+          <% end %>
+
+          <div class="mt-3">
+            <%= link_to 'Back to Tracks', tracks_path, class: 'btn btn-secondary' %>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Compatible Tracks Section -->
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-header">
+          <h4>Compatible Tracks</h4>
+        </div>
+        <div class="card-body"
+             data-controller="harmonic-filter"
+             data-harmonic-filter-track-id-value="<%= @track.id %>">
+
+          <!-- BPM Filter Controls -->
+          <div class="mb-4">
+            <div class="form-check mb-2">
+              <input class="form-check-input"
+                     type="checkbox"
+                     id="bpmFilterCheckbox"
+                     data-harmonic-filter-target="checkbox"
+                     data-action="change->harmonic-filter#checkboxToggled">
+              <label class="form-check-label" for="bpmFilterCheckbox">
+                Filter by BPM range
+              </label>
+            </div>
+
+            <div class="bpm-slider-container">
+              <label for="bpmRange" class="form-label">
+                BPM Range: <span data-harmonic-filter-target="sliderValue">±6 BPM</span>
+              </label>
+              <input type="range"
+                     class="form-range"
+                     id="bpmRange"
+                     min="0"
+                     max="20"
+                     value="6"
+                     data-harmonic-filter-target="slider"
+                     data-action="input->harmonic-filter#sliderChanged">
+            </div>
+          </div>
+
+          <!-- Results Container -->
+          <div data-harmonic-filter-target="results">
+            <!-- Perfect Match -->
+            <div class="mb-4" data-harmonic-filter-target="perfectSection">
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+              </div>
+            </div>
+
+            <!-- Smooth Transitions -->
+            <div class="mb-4" data-harmonic-filter-target="smoothSection">
+            </div>
+
+            <!-- Energy Boost -->
+            <div class="mb-4" data-harmonic-filter-target="energySection">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

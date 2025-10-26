@@ -17,6 +17,34 @@
     </div>
   </div>
 
+  <!-- Harmonic Flow Score -->
+  <% if @harmonic_analysis[:transitions].any? %>
+    <div class="card mb-4">
+      <div class="card-body">
+        <div class="row align-items-center">
+          <div class="col-md-8">
+            <h5 class="mb-3">Harmonic Flow Analysis</h5>
+            <div class="d-flex gap-3">
+              <% quality_counts = @harmonic_analysis[:quality_counts] || {} %>
+              <span class="badge bg-success">🟢 Perfect: <%= quality_counts[:perfect] || 0 %></span>
+              <span class="badge bg-primary">🔵 Smooth: <%= quality_counts[:smooth] || 0 %></span>
+              <span class="badge bg-warning">⚡ Energy: <%= quality_counts[:energy_boost] || 0 %></span>
+              <span class="badge bg-secondary">🟡 Rough: <%= quality_counts[:rough] || 0 %></span>
+            </div>
+          </div>
+          <div class="col-md-4 text-end">
+            <h3 class="mb-0">
+              <span class="badge <%= @harmonic_analysis[:score] >= 75 ? 'bg-success' : @harmonic_analysis[:score] >= 50 ? 'bg-warning' : 'bg-danger' %>">
+                <%= @harmonic_analysis[:score] %>%
+              </span>
+            </h3>
+            <small class="text-muted">Harmonic Flow Score</small>
+          </div>
+        </div>
+      </div>
+    </div>
+  <% end %>
+
   <!-- Second Section: Tracks Table -->
   <h2 class="text-center">Tracks</h2>
   <table id="tracks-table" class="table table-striped table-hover"
@@ -36,17 +64,20 @@
     </tr>
     </thead>
     <tbody>
-    <% @playlist.playlists_tracks.order(:order).each do |playlists_track| %>
+    <% ordered_tracks = @playlist.playlists_tracks.order(:order).to_a %>
+    <% ordered_tracks.each_with_index do |playlists_track, index| %>
       <tr data-id="<%= playlists_track.track.id %>">
         <td class="order-cell"><%= playlists_track.order %></td>
-        <td><%= playlists_track.track.name %></td>
+        <td>
+          <%= link_to playlists_track.track.name, track_path(playlists_track.track), class: 'text-decoration-none text-dark' %>
+        </td>
         <td>
           <% playlists_track.track.artists.each do |artist| %>
             <%= link_to artist.name, artist_path(artist), class: 'text-decoration-none text-dark' %>
             <%= ',' unless artist == playlists_track.track.artists.last %>
           <% end %>
         </td>
-        <td><%= link_to playlists_track.track.key&.name, key_path(playlists_track.track.key), class: 'text-decoration-none text-dark' %></td>
+        <td><%= link_to playlists_track.track.key&.name, key_path(playlists_track.track.key), class: 'badge bg-info text-decoration-none' if playlists_track.track.key %></td>
         <td><%= playlists_track.track.bpm %></td>
         <td><%= format_time(playlists_track.track.time) %></td>
         <td><%= playlists_track.track.album %></td>
@@ -60,6 +91,29 @@
           <% end %>
         </td>
       </tr>
+
+      <!-- Transition Indicator Row -->
+      <% if index < ordered_tracks.length - 1 %>
+        <% transition = @harmonic_analysis[:transitions].find { |t| t[:from].id == playlists_track.track.id } %>
+        <% if transition %>
+          <tr class="transition-row">
+            <td colspan="9" class="text-center py-1 bg-light"
+                data-controller="transition-indicator"
+                data-transition-indicator-from-track-value="<%= transition[:from].name %>"
+                data-transition-indicator-to-track-value="<%= transition[:to].name %>"
+                data-transition-indicator-from-key-value="<%= transition[:from].key&.name %>"
+                data-transition-indicator-to-key-value="<%= transition[:to].key&.name %>"
+                data-transition-indicator-quality-value="<%= transition[:quality] %>">
+              <small class="transition-indicator <%= transition[:quality] %>">
+                <%= transition[:indicator] %>
+                <span class="text-muted ms-2">
+                  <%= transition[:from].key&.name %> → <%= transition[:to].key&.name %>
+                </span>
+              </small>
+            </td>
+          </tr>
+        <% end %>
+      <% end %>
     <% end %>
     </tbody>
   </table>

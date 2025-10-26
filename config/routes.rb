@@ -1,9 +1,10 @@
 Rails.application.routes.draw do
   resources :artists, only: [:index, :show]
   resources :keys, only: [:index, :show]
-  resources :tracks, only: [:index] do
+  resources :tracks, only: [:index, :show] do
     member do
       post :upload_audio
+      get :compatible
     end
   end
 

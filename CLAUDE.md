@@ -127,9 +127,48 @@ yarn install
 **ArtistsController & KeysController**
 - Index and show views for browsing
 
+### Harmonic Mixing System
+
+**Overview**
+The harmonic mixing feature helps DJs find compatible tracks and analyze playlist transitions using Camelot Wheel notation. All tracks have keys stored in Camelot format (e.g., "8A", "12B").
+
+**CamelotWheelService** (`app/services/camelot_wheel_service.rb`)
+- Parses Camelot notation: Format `[1-12][A|B]` where number = wheel position, letter = mode (A=Minor, B=Major)
+- Calculates compatible keys based on harmonic mixing rules:
+  - **Perfect**: Same key (8A → 8A)
+  - **Smooth**: ±1 position (8A → 7A, 9A) or relative major/minor (8A ↔ 8B)
+  - **Energy Boost**: +7 positions forward (8A → 3A)
+  - **Rough**: All other transitions
+- Computes harmonic flow score (0-100%) for playlists
+- Formula: `(Perfect × 3 + Smooth × 2 + Energy × 2 + Rough × 0) / (total_transitions × 3) × 100`
+
+**HarmonicMixingService** (`app/services/harmonic_mixing_service.rb`)
+- Finds compatible tracks for a given track with optional BPM range filtering
+- Analyzes playlist transitions returning quality metrics and indicators
+- Groups results by compatibility type (perfect, smooth, energy_boost)
+
+**Model Methods**
+- `Key#compatible_keys(level:)` - Returns compatible Key records
+- `Key#transition_quality_to(other_key)` - Rates transition quality
+- `Track#find_compatible(bpm_range:)` - Finds compatible tracks with optional BPM filter
+- `Track#compatible_with?(other_track, bpm_range:)` - Boolean compatibility check
+- `Playlist#analyze_transitions` - Returns array of transition objects
+- `Playlist#harmonic_flow_score` - Returns 0-100 score
+- `Playlist#harmonic_analysis` - Full analysis with stats
+
+**UI Features**
+1. **Track Detail Page** (`tracks/show`): "Compatible Tracks" section with BPM slider (±0-20 BPM), results grouped by compatibility type
+2. **Playlist Detail Page** (`playlists/show`): Harmonic flow score badge, transition quality indicators between tracks, quality breakdown stats
+3. **Playlist Index** (`playlists/index`): Color-coded harmonic score badges on cards (green ≥75%, yellow ≥50%, red <50%)
+4. **Tracks Index** (`tracks/index`): Searchable compatibility filter with BPM range (client-side filtering on current page only)
+
+**Stimulus Controllers**
+- `harmonic_filter_controller.js` - Handles BPM slider, checkbox toggle, track filtering, Tom Select dropdown
+- `transition_indicator_controller.js` - Adds native browser tooltips to transition indicators using HTML `title` attribute (not Bootstrap tooltips - simpler, no dependencies)
+
 ### File Organization
 
-- `app/services/` - Business logic (currently just PlaylistImporter)
+- `app/services/` - Business logic (PlaylistImporter, CamelotWheelService, HarmonicMixingService)
 - `app/models/concerns/` - Shared model mixins
 - `app/assets/stylesheets/` - SCSS files (Bootstrap-based)
 - `app/assets/builds/` - Compiled CSS output
@@ -154,9 +193,14 @@ Used for two attachment types:
 ### Frontend Stack
 - Turbo Rails for SPA-like navigation
 - Stimulus.js for JavaScript controllers
-- Bootstrap 5.3 for UI components
-- Bootstrap Icons
+- Bootstrap 5.3 CSS only (no Bootstrap JS - using native HTML5 controls instead)
+  - **Why no Bootstrap JS**: Had importmap module resolution issues with Bootstrap + Popper.js dependencies
+  - **Alternative**: Using native HTML5 elements (range inputs, tooltips via `title` attribute)
+  - **Trade-off**: Less polished tooltips, but zero dependencies and simpler codebase
+- Bootstrap Icons (fonts served from `public/fonts/`)
+- Tom Select 2.4.3 (loaded via CDN `<script>` tag for searchable dropdowns, not via importmap due to plugin dependency issues)
 - CSS bundling via SASS + PostCSS + Autoprefixer
+- Importmap for JavaScript module management
 
 ## Database Schema Notes
 
@@ -165,3 +209,4 @@ Used for two attachment types:
 - Tracks have optional key_id foreign key (tracks can exist without keys)
 - PlaylistsTrack has both primary key (id) and order column
 - Active Storage tables follow Rails conventions
+- always update CLAUDE.md

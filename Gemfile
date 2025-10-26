@@ -63,7 +63,7 @@ end
 gem "rchardet"
 
 # Pagination pearl, very performant
-gem 'pagy', '~> 8.4.4'
+gem 'pagy', '~> 9.4'
 
 # ActiveStorage validator for content-type
 gem "activestorage-validator"

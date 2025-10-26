@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# Pagy initializer file (8.4.4)
+# Pagy initializer file (9.4.0)
 # Customize only what you really need and notice that the core Pagy works also without any of the following lines.
 # Should you just cherry pick part of this file, please maintain the require-order of the extras
 
@@ -10,8 +10,9 @@
 # You can set any pagy variable as a Pagy::DEFAULT. They can also be overridden per instance by just passing them to
 # Pagy.new|Pagy::Countless.new|Pagy::Calendar::*.new or any of the #pagy* controller methods
 # Here are the few that make more sense as DEFAULTs:
-Pagy::DEFAULT[:items]       = 10
-Pagy::DEFAULT[:size]        = [1,2,2,1]
+Pagy::DEFAULT[:limit]       = 10     # Renamed from :items in v9.0
+Pagy::DEFAULT[:size]        = 5      # Changed from array [1,2,2,1] to integer in v9.0
+Pagy::DEFAULT[:ends]        = true   # Show first and last page (default since 8.4.6)
 # Pagy::DEFAULT[:page_param]  = :page                 # default
 # Pagy::DEFAULT[:count_args]  = []                    # example for non AR ORMs
 

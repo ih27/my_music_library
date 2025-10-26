@@ -114,7 +114,7 @@ class PlaylistImporter
   end
 
   def detect_encoding(content)
-    CharlockHolmes::EncodingDetector.detect(content)[:encoding]
+    CharDet.detect(content)['encoding']
   end
 
   def sanitize_input(input, encoding)

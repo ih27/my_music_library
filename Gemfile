@@ -1,6 +1,6 @@
 source "https://rubygems.org"
 
-ruby "3.2.2"
+ruby "3.3.10"
 
 # Bundle edge Rails instead: gem "rails", github: "rails/rails", branch: "main"
 gem "rails", "~> 7.1.3", ">= 7.1.3.3"
@@ -59,8 +59,8 @@ group :development do
   # gem "spring"
 end
 
-# Character encoding detection
-gem "charlock_holmes"
+# Character encoding detection (pure Ruby, no native extensions)
+gem "rchardet"
 
 # Pagination pearl, very performant
 gem 'pagy', '~> 8.4.4'

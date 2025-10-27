@@ -1,8 +1,9 @@
+require:
+  - rubocop-rails
+  - rubocop-rspec
+  - rubocop-factory_bot
+
 AllCops:
-  plugins:
-    - rubocop-rails
-    - rubocop-rspec
-    - rubocop-factory_bot
   SuggestExtensions: false
   NewCops: enable
   TargetRubyVersion: 3.3

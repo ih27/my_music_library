@@ -6,11 +6,6 @@ RSpec.describe "Playlists", type: :request do
   describe "GET /playlists" do
     let!(:playlists) { create_list(:playlist, 3) }
 
-    it "returns a successful response" do
-      get playlists_path
-      expect(response).to be_successful
-    end
-
     it "displays all playlists" do
       get playlists_path
       expect(response).to be_successful
@@ -21,19 +16,9 @@ RSpec.describe "Playlists", type: :request do
   describe "GET /playlists/:id" do
     let(:playlist) { create(:playlist, :with_harmonic_flow) }
 
-    it "returns a successful response" do
+    it "displays the playlist with harmonic analysis" do
       get playlist_path(playlist)
       expect(response).to be_successful
-    end
-
-    it "displays the playlist details" do
-      get playlist_path(playlist)
-      expect(response).to be_successful
-      expect(response.body).to include("Harmonic")
-    end
-
-    it "displays harmonic analysis" do
-      get playlist_path(playlist)
       expect(response.body).to include("Harmonic")
     end
   end

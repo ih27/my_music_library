@@ -6,62 +6,40 @@ RSpec.describe "Keys", type: :request do
   describe "GET /keys" do
     let!(:keys) { create_list(:key, 5) }
 
-    it "returns a successful response" do
-      get keys_path
-      expect(response).to be_successful
-    end
-
     it "displays all keys" do
       get keys_path
       expect(response).to be_successful
       expect(response.body).to include("Keys")
     end
-
-    it "sorts keys naturally" do
-      get keys_path
-      expect(response).to be_successful
-    end
   end
 
   describe "GET /keys/:id" do
     let(:key) { create(:key, :camelot_8a) }
-    let!(:track) { create(:track, key: key) }
+    let!(:track_slow) { create(:track, name: "Slow Track", key: key, bpm: 100) }
+    let!(:track_fast) { create(:track, name: "Fast Track", key: key, bpm: 140) }
     let!(:playlist) { create(:playlist) }
 
     before do
-      PlaylistsTrack.create!(playlist: playlist, track: track, order: 1)
+      PlaylistsTrack.create!(playlist: playlist, track: track_slow, order: 1)
     end
 
-    it "returns a successful response" do
-      get key_path(key)
-      expect(response).to be_successful
-    end
-
-    it "displays the key details" do
+    it "displays the key details and tracks" do
       get key_path(key)
       expect(response).to be_successful
       expect(response.body).to include("Total Tracks")
-    end
-
-    it "displays tracks in the key" do
-      get key_path(key)
-      expect(response).to be_successful
-    end
-
-    it "displays playlists containing tracks in this key" do
-      get key_path(key)
-      expect(response).to be_successful
+      expect(response.body).to include("Slow Track")
+      expect(response.body).to include("Fast Track")
     end
 
     context "with search query" do
-      it "filters key tracks by search term" do
-        get key_path(key), params: { search: "test" }
+      it "accepts search parameters" do
+        get key_path(key), params: { search: "Track" }
         expect(response).to be_successful
       end
     end
 
     context "with sorting" do
-      it "sorts tracks by BPM" do
+      it "accepts sorting parameters" do
         get key_path(key), params: { sort: "tracks.bpm", direction: "desc" }
         expect(response).to be_successful
       end

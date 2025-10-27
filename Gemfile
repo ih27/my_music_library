@@ -78,6 +78,7 @@ group :test do
   # Test helpers
   gem "database_cleaner-active_record", "~> 2.2"
   gem "shoulda-matchers", "~> 6.4"
+  gem "simplecov", "~> 0.22", require: false
 end
 
 # Character encoding detection (pure Ruby, no native extensions)

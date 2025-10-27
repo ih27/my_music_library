@@ -32,5 +32,8 @@ jobs:
     - name: Install Node dependencies
       run: yarn install --frozen-lockfile
 
+    - name: Build CSS assets
+      run: yarn build:css
+
     - name: Run CI
       run: bin/ci

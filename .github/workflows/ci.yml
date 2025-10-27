@@ -10,9 +10,6 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
-    services:
-      # No external services needed - using SQLite
-
     env:
       RAILS_ENV: test
 

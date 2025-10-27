@@ -4,7 +4,6 @@
 # Customize only what you really need and notice that the core Pagy works also without any of the following lines.
 # Should you just cherry pick part of this file, please maintain the require-order of the extras
 
-
 # Pagy Variables
 # See https://ddnexus.github.io/pagy/docs/api/pagy#variables
 # You can set any pagy variable as a Pagy::DEFAULT. They can also be overridden per instance by just passing them to
@@ -16,10 +15,8 @@ Pagy::DEFAULT[:ends]        = true   # Show first and last page (default since 8
 # Pagy::DEFAULT[:page_param]  = :page                 # default
 # Pagy::DEFAULT[:count_args]  = []                    # example for non AR ORMs
 
-
 # Extras
 # See https://ddnexus.github.io/pagy/categories/extra
-
 
 # Backend Extras
 
@@ -29,7 +26,7 @@ Pagy::DEFAULT[:ends]        = true   # Show first and last page (default since 8
 
 # Array extra: Paginate arrays efficiently, avoiding expensive array-wrapping and without overriding
 # See https://ddnexus.github.io/pagy/docs/extras/array
-require 'pagy/extras/array'
+require "pagy/extras/array"
 
 # Calendar extra: Add pagination filtering by calendar time unit (year, quarter, month, week, day)
 # See https://ddnexus.github.io/pagy/docs/extras/calendar
@@ -108,12 +105,11 @@ require 'pagy/extras/array'
 # uncomment if you are going to use Searchkick.pagy_search
 # Searchkick.extend Pagy::Searchkick
 
-
 # Frontend Extras
 
 # Bootstrap extra: Add nav, nav_js and combo_nav_js helpers and templates for Bootstrap pagination
 # See https://ddnexus.github.io/pagy/docs/extras/bootstrap
-require 'pagy/extras/bootstrap'
+require "pagy/extras/bootstrap"
 
 # Bulma extra: Add nav, nav_js and combo_nav_js helpers and templates for Bulma pagination
 # See https://ddnexus.github.io/pagy/docs/extras/bulma
@@ -127,7 +123,6 @@ require 'pagy/extras/bootstrap'
 # Multi size var used by the *_nav_js helpers
 # See https://ddnexus.github.io/pagy/docs/extras/pagy#steps
 # Pagy::DEFAULT[:steps] = { 0 => [2,3,3,2], 540 => [3,5,5,3], 720 => [5,7,7,5] }   # example
-
 
 # Feature Extras
 
@@ -153,7 +148,7 @@ require 'pagy/extras/bootstrap'
 
 # Trim extra: Remove the page=1 param from links
 # See https://ddnexus.github.io/pagy/docs/extras/trim
-require 'pagy/extras/trim'
+require "pagy/extras/trim"
 # set to false only if you want to make :trim_extra an opt-in variable
 # Pagy::DEFAULT[:trim_extra] = false # default true
 
@@ -167,7 +162,6 @@ require 'pagy/extras/trim'
 # require 'pagy/extras/jsonapi'   # must be required after the other extras
 # set to false only if you want to make :jsonapi an opt-in variable
 # Pagy::DEFAULT[:jsonapi] = false  # default true
-
 
 # Rails
 # Enable the .js file required by the helpers that use javascript
@@ -207,12 +201,10 @@ require 'pagy/extras/trim'
 #                   filepath: 'path/to/pagy-xyz.yml',
 #                   pluralize: lambda{ |count| ... } )
 
-
 # I18n extra: uses the standard i18n gem which is ~18x slower using ~10x more memory
 # than the default pagy internal i18n (see above)
 # See https://ddnexus.github.io/pagy/docs/extras/i18n
 # require 'pagy/extras/i18n'
-
 
 # When you are done setting your own default freeze it, so it will not get changed accidentally
 Pagy::DEFAULT.freeze

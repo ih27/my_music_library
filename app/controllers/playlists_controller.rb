@@ -1,5 +1,15 @@
+# frozen_string_literal: true
+
 class PlaylistsController < ApplicationController
-  before_action :set_playlist, only: [:show, :destroy, :reorder_tracks]
+  before_action :set_playlist, only: %i[show destroy reorder_tracks]
+
+  def index
+    @playlists = Playlist.all
+  end
+
+  def show
+    @harmonic_analysis = @playlist.harmonic_analysis
+  end
 
   def new
     @playlist = Playlist.new
@@ -17,35 +27,25 @@ class PlaylistsController < ApplicationController
         playlist_name = File.basename(file.original_filename, File.extname(file.original_filename))
         @playlist = Playlist.new(name: playlist_name)
 
-        if cover_art.present?
-          @playlist.cover_art.attach(cover_art)
-        end
+        @playlist.cover_art.attach(cover_art) if cover_art.present?
 
         importer = PlaylistImporter.new(@playlist, file)
         if importer.call
           attach_default_cover_art unless @playlist.cover_art.attached?
-          redirect_to @playlist, notice: 'Playlist was successfully created.'
+          redirect_to @playlist, notice: "Playlist was successfully created."
         else
           Rails.logger.info "Playlist import failed: Duplicate playlist detected or invalid data."
-          flash.now[:alert] = 'Duplicate playlist detected or invalid data.'
+          flash.now[:alert] = "Duplicate playlist detected or invalid data."
           render :new, status: :unprocessable_entity
         end
       else
-        flash.now[:alert] = 'File is required to create a playlist.'
+        flash.now[:alert] = "File is required to create a playlist."
         render :new, status: :unprocessable_entity
       end
     else
-      flash.now[:alert] = 'File is required to create a playlist.'
+      flash.now[:alert] = "File is required to create a playlist."
       render :new, status: :unprocessable_entity
     end
-  end
-
-  def show
-    @harmonic_analysis = @playlist.harmonic_analysis
-  end
-
-  def index
-    @playlists = Playlist.all
   end
 
   def destroy
@@ -56,7 +56,7 @@ class PlaylistsController < ApplicationController
     destroy_orphaned_tracks(track_ids)
     destroy_orphaned_artists(artist_ids)
 
-    redirect_to playlists_url, notice: 'Playlist was successfully deleted.'
+    redirect_to playlists_url, notice: "Playlist was successfully deleted."
   end
 
   def reorder_tracks
@@ -69,7 +69,8 @@ class PlaylistsController < ApplicationController
           playlist_track.update_column(:order, item[:order])
         else
           Rails.logger.error "Couldn't find PlaylistsTrack with playlist_id: #{@playlist.id} and track_id: #{item[:id]}"
-          raise ActiveRecord::RecordNotFound, "Couldn't find PlaylistsTrack with playlist_id: #{@playlist.id} and track_id: #{item[:id]}"
+          raise ActiveRecord::RecordNotFound,
+                "Couldn't find PlaylistsTrack with playlist_id: #{@playlist.id} and track_id: #{item[:id]}"
         end
       end
     end
@@ -88,14 +89,14 @@ class PlaylistsController < ApplicationController
   end
 
   def playlist_params
-    params.require(:playlist).permit(:cover_art, :file)
+    params.expect(playlist: %i[cover_art file])
   end
 
   def attach_default_cover_art
     @playlist.cover_art.attach(
-      io: File.open(Rails.root.join('app', 'assets', 'images', 'default_cover_art.jpg')),
-      filename: 'default_cover_art.jpg',
-      content_type: 'image/jpg'
+      io: Rails.root.join("app/assets/images/default_cover_art.jpg").open,
+      filename: "default_cover_art.jpg",
+      content_type: "image/jpg"
     )
   end
 

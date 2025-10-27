@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Service for finding compatible tracks and analyzing harmonic mixing
 #
 # This service uses CamelotWheelService to:
@@ -36,7 +38,7 @@ class HarmonicMixingService
     base_query = Track.where.not(id: track.id)
 
     # Apply BPM filtering if specified
-    if bpm_range.present? && bpm_range > 0
+    if bpm_range.present? && bpm_range.positive?
       bpm_min = track.bpm - bpm_range
       bpm_max = track.bpm + bpm_range
       base_query = base_query.where(bpm: bpm_min..bpm_max)
@@ -80,7 +82,7 @@ class HarmonicMixingService
       score: score,
       total_transitions: transitions.size,
       quality_counts: transitions.group_by { |t| t[:quality] }
-                                  .transform_values(&:count)
+                                 .transform_values(&:count)
     }
   end
 end

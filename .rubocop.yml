@@ -1,0 +1,144 @@
+AllCops:
+  plugins:
+    - rubocop-rails
+    - rubocop-rspec
+    - rubocop-factory_bot
+  SuggestExtensions: false
+  NewCops: enable
+  TargetRubyVersion: 3.3
+  Exclude:
+    - 'bin/**/*'
+    - 'db/schema.rb'
+    - 'db/migrate/**/*'
+    - 'node_modules/**/*'
+    - 'vendor/**/*'
+    - 'tmp/**/*'
+    - 'log/**/*'
+    - 'public/**/*'
+
+# Prefer single quotes for strings
+Style/StringLiterals:
+  EnforcedStyle: double_quotes
+
+# Allow longer lines in specs and services
+Layout/LineLength:
+  Max: 160
+  Exclude:
+    - 'spec/**/*'
+    - 'config/**/*'
+
+# Allow longer methods in specs
+Metrics/MethodLength:
+  Max: 40
+  Exclude:
+    - 'spec/**/*'
+    - 'app/controllers/**/*'
+
+# Allow longer blocks in specs
+Metrics/BlockLength:
+  Max: 35
+  Exclude:
+    - 'spec/**/*'
+    - 'config/**/*'
+    - 'config/environments/**/*'
+    - 'config/routes.rb'
+
+# Allow more complex specs
+Metrics/AbcSize:
+  Max: 55
+  Exclude:
+    - 'spec/**/*'
+    - 'app/controllers/**/*'
+
+# Allow class length for controllers and services
+Metrics/ClassLength:
+  Max: 150
+  Exclude:
+    - 'spec/**/*'
+
+# Prefer compact class/module definitions
+Style/ClassAndModuleChildren:
+  Enabled: false
+
+# Allow empty methods without comments
+Style/EmptyMethod:
+  EnforcedStyle: expanded
+
+# Prefer has_many/belongs_to over has_and_belongs_to_many
+Rails/HasAndBelongsToMany:
+  Enabled: false
+
+# Allow skipping model validations for performance
+Rails/SkipsModelValidations:
+  Enabled: false
+
+# RSpec specific configurations
+RSpec/ExampleLength:
+  Max: 20
+
+RSpec/MultipleExpectations:
+  Max: 10
+
+RSpec/NestedGroups:
+  Max: 5
+
+RSpec/MultipleMemoizedHelpers:
+  Max: 10
+
+# Allow describe methods in controllers
+RSpec/DescribeMethod:
+  Enabled: false
+
+# Allow indexed let names in specs (e.g., track1, track2)
+RSpec/IndexedLet:
+  Enabled: false
+
+# Allow repeated examples (e.g., multiple "returns a successful response" tests)
+RSpec/RepeatedExample:
+  Enabled: false
+
+# Allow let! for test setup
+RSpec/LetSetup:
+  Enabled: false
+
+# Allow missing documentation in controllers/services
+Style/Documentation:
+  Exclude:
+    - 'app/controllers/**/*'
+    - 'app/services/**/*'
+    - 'app/helpers/**/*'
+    - 'app/models/**/*'
+    - 'app/mailers/**/*'
+    - 'app/jobs/**/*'
+    - 'config/**/*'
+
+# Allow i18n locale texts in controllers for now
+Rails/I18nLocaleTexts:
+  Enabled: false
+
+# Allow default action order for better code organization
+Rails/ActionOrder:
+  Enabled: false
+
+# Allow format string tokens without annotation
+Style/FormatStringToken:
+  Enabled: false
+
+# Allow has_many without dependent for optional relationships
+Rails/HasManyOrHasOneDependent:
+  Enabled: false
+
+# Allow unique validations without indexes (can be added later)
+Rails/UniqueValidationWithoutIndex:
+  Enabled: false
+
+# Allow complexity in controller actions
+Metrics/CyclomaticComplexity:
+  Max: 20
+  Exclude:
+    - 'app/controllers/**/*'
+
+Metrics/PerceivedComplexity:
+  Max: 20
+  Exclude:
+    - 'app/controllers/**/*'

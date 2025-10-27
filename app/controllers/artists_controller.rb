@@ -1,8 +1,10 @@
+# frozen_string_literal: true
+
 class ArtistsController < ApplicationController
   before_action :set_artist, only: [:show]
 
   def index
-    @artists = Artist.all.sort_by{|artist| [-artist.tracks.count, artist.name]}
+    @artists = Artist.all.sort_by { |artist| [-artist.tracks.count, artist.name] }
   end
 
   def show
@@ -10,24 +12,22 @@ class ArtistsController < ApplicationController
 
     tracks = @artist.tracks.includes(:artists, :key, :playlists)
 
-    if params[:search].present?
-      tracks = tracks.search(params[:search])
-    end
+    tracks = tracks.search(params[:search]) if params[:search].present?
 
     if params[:sort].present? && params[:direction].present?
       column = params[:sort]
       direction = params[:direction]
 
       case column
-      when 'keys.name'
+      when "keys.name"
         tracks = tracks.sort_by { |track| natural_sort_key(track.key&.name) }
-        tracks.reverse! if direction == 'desc'
-      when 'artists.name'
+        tracks.reverse! if direction == "desc"
+      when "artists.name"
         tracks = tracks.sort_by { |track| track.artists.map(&:name).join(", ") }
-        tracks.reverse! if direction == 'desc'
-      when 'playlists.name'
+        tracks.reverse! if direction == "desc"
+      when "playlists.name"
         tracks = tracks.sort_by { |track| natural_sort_key(track.playlists.map(&:name).join(", ")) }
-        tracks.reverse! if direction == 'desc'
+        tracks.reverse! if direction == "desc"
       else
         tracks = tracks.order("#{column} #{direction}")
       end

@@ -1,25 +1,25 @@
+# frozen_string_literal: true
+
 class TracksController < ApplicationController
   def index
-    tracks = Track.all.includes(:artists, :key, :playlists)
+    tracks = Track.includes(:artists, :key, :playlists)
 
-    if params[:search].present?
-      tracks = tracks.search(params[:search])
-    end
+    tracks = tracks.search(params[:search]) if params[:search].present?
 
     if params[:sort].present? && params[:direction].present?
       column = params[:sort]
       direction = params[:direction]
 
       case column
-      when 'keys.name'
+      when "keys.name"
         tracks = tracks.sort_by { |track| natural_sort_key(track.key&.name) }
-        tracks.reverse! if direction == 'desc'
-      when 'artists.name'
+        tracks.reverse! if direction == "desc"
+      when "artists.name"
         tracks = tracks.sort_by { |track| track.artists.map(&:name).join(", ") }
-        tracks.reverse! if direction == 'desc'
-      when 'playlists.name'
+        tracks.reverse! if direction == "desc"
+      when "playlists.name"
         tracks = tracks.sort_by { |track| natural_sort_key(track.playlists.map(&:name).join(", ")) }
-        tracks.reverse! if direction == 'desc'
+        tracks.reverse! if direction == "desc"
       else
         tracks = tracks.order("#{column} #{direction}")
       end
@@ -38,9 +38,9 @@ class TracksController < ApplicationController
   def upload_audio
     @track = Track.find(params[:id])
     if @track.update(audio_file_params)
-      redirect_to tracks_path, notice: 'Audio file was successfully uploaded.'
+      redirect_to tracks_path, notice: "Audio file was successfully uploaded."
     else
-      redirect_to tracks_path, alert: 'Failed to upload audio file.'
+      redirect_to tracks_path, alert: "Failed to upload audio file."
     end
   end
 
@@ -53,14 +53,15 @@ class TracksController < ApplicationController
     render json: {
       perfect: compatible_tracks[:perfect].as_json(include: { artists: { only: [:name] }, key: { only: [:name] } }),
       smooth: compatible_tracks[:smooth].as_json(include: { artists: { only: [:name] }, key: { only: [:name] } }),
-      energy_boost: compatible_tracks[:energy_boost].as_json(include: { artists: { only: [:name] }, key: { only: [:name] } })
+      energy_boost: compatible_tracks[:energy_boost].as_json(include: { artists: { only: [:name] },
+                                                                        key: { only: [:name] } })
     }
   end
 
   private
 
   def audio_file_params
-    params.require(:track).permit(:id, :audio_file)
+    params.expect(track: %i[id audio_file])
   end
 
   def natural_sort_key(key)

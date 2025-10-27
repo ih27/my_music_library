@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 class PlaylistsTrack < ApplicationRecord
-  self.table_name = 'playlists_tracks'
+  self.table_name = "playlists_tracks"
 
   belongs_to :playlist
   belongs_to :track

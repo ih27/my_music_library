@@ -1,0 +1,2 @@
+#	Track Title	Artist	BPM	Date Added
+1	Minimal Song	Minimal Artist	120.0	2024-01-01

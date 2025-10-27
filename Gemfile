@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 source "https://rubygems.org"
 
 ruby "3.3.10"
@@ -39,7 +41,7 @@ gem "redis", ">= 4.0.1"
 # gem "bcrypt", "~> 3.1.7"
 
 # Windows does not include zoneinfo files, so bundle the tzinfo-data gem
-gem "tzinfo-data", platforms: %i[ windows jruby ]
+gem "tzinfo-data", platforms: %i[windows jruby]
 
 # Reduces boot times through caching; required in config/boot.rb
 gem "bootsnap", require: false
@@ -47,10 +49,23 @@ gem "bootsnap", require: false
 # Use Active Storage variants [https://guides.rubyonrails.org/active_storage_overview.html#transforming-images]
 # gem "image_processing", "~> 1.2"
 
+group :development, :test do
+  # Testing framework
+  gem "debug"
+  gem "factory_bot_rails", "~> 6.4"
+  gem "faker", "~> 3.5"
+  gem "rspec-rails", "~> 7.1"
+end
+
 group :development do
   # Use console on exceptions pages [https://github.com/rails/web-console]
   gem "web-console"
-  gem "debug"
+
+  # Ruby static code analyzer
+  gem "rubocop", "~> 1.71", require: false
+  gem "rubocop-factory_bot", "~> 2.27", require: false
+  gem "rubocop-rails", "~> 2.28", require: false
+  gem "rubocop-rspec", "~> 3.3", require: false
 
   # Add speed badges [https://github.com/MiniProfiler/rack-mini-profiler]
   # gem "rack-mini-profiler"
@@ -59,11 +74,17 @@ group :development do
   # gem "spring"
 end
 
+group :test do
+  # Test helpers
+  gem "database_cleaner-active_record", "~> 2.2"
+  gem "shoulda-matchers", "~> 6.4"
+end
+
 # Character encoding detection (pure Ruby, no native extensions)
 gem "rchardet"
 
 # Pagination pearl, very performant
-gem 'pagy', '~> 9.4'
+gem "pagy", "~> 9.4"
 
 # ActiveStorage validator for content-type
 gem "activestorage-validator"

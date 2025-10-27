@@ -210,3 +210,41 @@ Used for two attachment types:
 - PlaylistsTrack has both primary key (id) and order column
 - Active Storage tables follow Rails conventions
 - always update CLAUDE.md
+
+## Testing
+
+### Running Tests
+```bash
+# Run all specs
+bundle exec rspec
+
+# Run specific spec file
+bundle exec rspec spec/models/playlist_spec.rb
+
+# Run specific test
+bundle exec rspec spec/models/playlist_spec.rb:25
+```
+
+### Test Coverage
+The application has comprehensive test coverage including:
+- **Model specs**: All models (Playlist, Track, Artist, Key, PlaylistsTrack) with associations, validations, and methods
+- **Service specs**: PlaylistImporter, CamelotWheelService, HarmonicMixingService
+- **Request specs**: All controllers (Playlists, Tracks, Artists, Keys)
+
+### Test Infrastructure
+- **RSpec 7.1**: Main testing framework
+- **FactoryBot**: Test data factories for all models
+- **Faker**: Realistic fake data generation
+- **Shoulda Matchers**: Simplified validation/association testing
+- **DatabaseCleaner**: Ensures clean test database state
+
+### Code Quality
+```bash
+# Run RuboCop
+bundle exec rubocop
+
+# Auto-fix violations
+bundle exec rubocop --autocorrect-all
+```
+
+RuboCop is configured to enforce Rails and RSpec best practices while allowing flexibility for controller complexity and I18n requirements.

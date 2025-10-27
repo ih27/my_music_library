@@ -1,0 +1,4 @@
+#	Track Title	Artist	BPM	Date Added	Key	Time	Album
+1	Test Song 1	Artist One	128.0	2024-01-01	8A	4:30	Test Album
+2	Test Song 2	Artist Two	130.0	2024-01-02	8B	5:00	Test Album 2
+3	Test Song 3	Artist One, Artist Two	125.0	2024-01-03	7A	3:45	Test Album

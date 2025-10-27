@@ -1,6 +1,8 @@
+# frozen_string_literal: true
+
 class PlaylistImporter
-  REQUIRED_HEADERS = %w[# Track\ Title Artist BPM Date\ Added]
-  OPTIONAL_HEADERS = %w[Key Time Album]
+  REQUIRED_HEADERS = ["#", "Track Title", "Artist", "BPM", "Date Added"].freeze
+  OPTIONAL_HEADERS = %w[Key Time Album].freeze
 
   def initialize(playlist, file)
     @playlist = playlist
@@ -16,7 +18,9 @@ class PlaylistImporter
     return false if duplicate_playlist?
 
     ActiveRecord::Base.transaction do
-      Rails.logger.info "Attempting to save playlist with track_ids: #{@track_ids.inspect}"
+      Rails.logger.info(
+        "Attempting to save playlist with track_ids: #{@track_ids.inspect}"
+      )
 
       begin
         @playlist.save!
@@ -33,15 +37,17 @@ class PlaylistImporter
           track.artists << artist unless track.artists.include?(artist)
         end
 
-        order = track_data[:order] || index + 1
-        Rails.logger.info "Creating PlaylistsTrack with playlist_id: #{@playlist.id}, track_id: #{track.id}, order: #{order}"
+        order = track_data[:order] || (index + 1)
+        Rails.logger.info(
+          "Creating PlaylistsTrack: playlist=#{@playlist.id}, track=#{track.id}, order=#{order}"
+        )
 
         playlists_track = PlaylistsTrack.new(playlist: @playlist, track: track, order: order)
         Rails.logger.info "PlaylistsTrack attributes: #{playlists_track.attributes.inspect}"
 
         unless playlists_track.save
           Rails.logger.error "PlaylistsTrack validation failed: #{playlists_track.errors.full_messages.join(', ')}"
-          raise ActiveRecord::RecordInvalid.new(playlists_track)
+          raise ActiveRecord::RecordInvalid, playlists_track
         end
       end
     end
@@ -56,13 +62,13 @@ class PlaylistImporter
   def parse_file
     file_content = @file.read
     detected_encoding = detect_encoding(file_content)
-    puts "Detected encoding: #{detected_encoding}"
+    Rails.logger.debug { "Detected encoding: #{detected_encoding}" }
     sanitized_content = sanitize_input(file_content, detected_encoding)
     lines = sanitized_content.split("\n")
 
     # Parse headers
     header_line = lines.shift
-    puts "Headers: #{header_line.inspect}"
+    Rails.logger.debug { "Headers: #{header_line.inspect}" }
     parse_headers(header_line)
 
     lines.each do |line|
@@ -74,19 +80,17 @@ class PlaylistImporter
         track = Track.find_or_initialize_by(track_data[:track_attributes])
         @track_ids << track.id if track_data
         @tracks_data << track_data if track_data
-      rescue => e
+      rescue StandardError => e
         Rails.logger.error "Failed to process line: #{line}. Error: #{e.message}"
       end
     end
   end
 
   def parse_headers(header_line)
-    headers = header_line.split("\t").map { |h| h.strip.gsub(/\A[\u{FEFF}\u{200B}]+/, '') }
+    headers = header_line.split("\t").map { |h| h.strip.gsub(/\A[\u{FEFF}\u{200B}]+/, "") }
 
     REQUIRED_HEADERS.each do |required_header|
-      unless headers.any? { |h| h == required_header }
-        raise "Missing required header: #{required_header}"
-      end
+      raise "Missing required header: #{required_header}" unless headers.any? { |h| h == required_header }
     end
 
     (REQUIRED_HEADERS + OPTIONAL_HEADERS).each do |header|
@@ -96,40 +100,41 @@ class PlaylistImporter
   end
 
   def process_line(data)
-    track_artists = data[@headers_map['Artist']].split(', ')
-    key_name = data[@headers_map['Key']] if @headers_map['Key']
+    track_artists = data[@headers_map["Artist"]].split(", ")
+    key_name = data[@headers_map["Key"]] if @headers_map["Key"]
     key = Key.find_or_create_by!(name: key_name) if key_name.present?
 
     track_attributes = {
-      name: data[@headers_map['Track Title']],
-      bpm: data[@headers_map['BPM']].to_d,
-      date_added: Date.parse(data[@headers_map['Date Added']])
+      name: data[@headers_map["Track Title"]],
+      bpm: data[@headers_map["BPM"]].to_d,
+      date_added: Date.parse(data[@headers_map["Date Added"]])
     }
     track_attributes[:key] = key if key
-    track_attributes[:time] = convert_time_to_seconds(data[@headers_map['Time']]) if @headers_map['Time']
-    track_attributes[:album] = data[@headers_map['Album']].presence if @headers_map['Album']
+    track_attributes[:time] = convert_time_to_seconds(data[@headers_map["Time"]]) if @headers_map["Time"]
+    track_attributes[:album] = data[@headers_map["Album"]].presence if @headers_map["Album"]
 
-    order = data[@headers_map['#']].to_i
+    order = data[@headers_map["#"]].to_i
     { track_attributes: track_attributes, artists: track_artists, order: order }
   end
 
   def detect_encoding(content)
-    CharDet.detect(content)['encoding']
+    CharDet.detect(content)["encoding"]
   end
 
   def sanitize_input(input, encoding)
-    content = input.force_encoding(encoding).encode('UTF-8', invalid: :replace, undef: :replace, replace: '')
-    content.gsub(/\A\xEF\xBB\xBF/, '') # Remove BOM if present
+    content = input.force_encoding(encoding).encode("UTF-8", invalid: :replace, undef: :replace, replace: "")
+    content.gsub(/\A\xEF\xBB\xBF/, "") # Remove BOM if present
   end
 
   def convert_time_to_seconds(time_str)
     return nil unless time_str
-    mins, secs = time_str.split(':').map(&:to_i)
-    mins * 60 + secs
+
+    mins, secs = time_str.split(":").map(&:to_i)
+    (mins * 60) + secs
   end
 
   def duplicate_playlist?
-    new_playlist_identifier = @track_ids.sort.join('-')
+    new_playlist_identifier = @track_ids.sort.join("-")
     Rails.logger.info "New playlist identifier: #{new_playlist_identifier}"
 
     duplicates = Playlist.all.select { |playlist| playlist.unique_identifier == new_playlist_identifier }

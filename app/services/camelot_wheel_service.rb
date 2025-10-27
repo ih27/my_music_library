@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Service for handling Camelot Wheel harmonic mixing logic
 #
 # The Camelot Wheel maps musical keys to a 12-position wheel with two modes:
@@ -12,14 +14,14 @@
 
 class CamelotWheelService
   POSITIONS = (1..12).to_a
-  MODES = ['A', 'B'].freeze
+  MODES = %w[A B].freeze
 
   # Visual indicators for transition quality
   INDICATORS = {
-    perfect: '🟢',
-    smooth: '🔵',
-    energy_boost: '⚡',
-    rough: '🟡'
+    perfect: "🟢",
+    smooth: "🔵",
+    energy_boost: "⚡",
+    rough: "🟡"
   }.freeze
 
   # Parse Camelot notation (e.g., "8A" → {position: 8, mode: 'A'})
@@ -143,12 +145,9 @@ class CamelotWheelService
     INDICATORS[quality] || INDICATORS[:rough]
   end
 
-  private
-
   # Increment position with wrapping (1-12)
   def self.increment_position(position, delta)
-    new_position = ((position - 1 + delta) % 12) + 1
-    new_position
+    ((position - 1 + delta) % 12) + 1
   end
 
   # Calculate circular difference between positions
@@ -159,7 +158,7 @@ class CamelotWheelService
 
   # Get opposite mode (A ↔ B)
   def self.opposite_mode(mode)
-    mode == 'A' ? 'B' : 'A'
+    mode == "A" ? "B" : "A"
   end
 
   # Format key as Camelot notation

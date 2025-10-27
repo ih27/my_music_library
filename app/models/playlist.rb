@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class Playlist < ApplicationRecord
   has_many :playlists_tracks, dependent: :destroy
   has_many :tracks, through: :playlists_tracks
@@ -8,7 +10,7 @@ class Playlist < ApplicationRecord
   after_create :attach_default_cover_art
 
   def unique_identifier
-    tracks.order(:id).pluck(:id).join('-')
+    tracks.order(:id).pluck(:id).join("-")
   end
 
   # Analyze harmonic transitions between consecutive tracks
@@ -37,12 +39,12 @@ class Playlist < ApplicationRecord
   private
 
   def attach_default_cover_art
-    unless cover_art.attached?
-      cover_art.attach(
-        io: File.open(Rails.root.join('app', 'assets', 'images', 'default_cover_art.jpg')),
-        filename: 'default_cover_art.jpg',
-        content_type: 'image/jpg'
-      )
-    end
+    return if cover_art.attached?
+
+    cover_art.attach(
+      io: Rails.root.join("app/assets/images/default_cover_art.jpg").open,
+      filename: "default_cover_art.jpg",
+      content_type: "image/jpg"
+    )
   end
 end

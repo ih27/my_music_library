@@ -24,5 +24,9 @@ FactoryBot.define do
     trait :camelot_3a do
       name { "3A" }
     end
+
+    trait :camelot_1a do
+      name { "1A" }
+    end
   end
 end

@@ -22,16 +22,11 @@ export default class extends Controller {
       }
     }
 
-    // Initialize Tom Select for searchable dropdown (tracks index page)
+    // Initialize Tom Select for searchable dropdown (tracks index page only if form-based)
     if (this.hasTrackSelectTarget && typeof window.TomSelect !== 'undefined') {
       this.tomSelect = new window.TomSelect(this.trackSelectTarget, {
         placeholder: 'Select a track...',
-        maxOptions: null,
-        onChange: (value) => {
-          if (value) {
-            this.filterByCompatibility(value)
-          }
-        }
+        maxOptions: null
       })
     }
 
@@ -47,6 +42,13 @@ export default class extends Controller {
     }
   }
 
+  // Handler for track dropdown change on tracks index (triggers form submission)
+  trackChanged(event) {
+    if (event.target.value) {
+      this.submitForm()
+    }
+  }
+
   updateSliderValue() {
     const value = this.sliderTarget.value
     this.sliderValueTarget.textContent = `±${value} BPM`
@@ -54,8 +56,20 @@ export default class extends Controller {
 
   sliderChanged() {
     this.updateSliderValue()
-    if (this.checkboxTarget.checked) {
-      this.loadCompatibleTracks()
+
+    // For track show page (has trackIdValue), load compatible tracks via AJAX
+    if (this.trackIdValue) {
+      if (this.checkboxTarget.checked) {
+        this.loadCompatibleTracks()
+      }
+    } else {
+      // For tracks index page, debounce and submit form if checkbox is checked
+      if (this.hasCheckboxTarget && this.checkboxTarget.checked) {
+        clearTimeout(this.sliderTimeout)
+        this.sliderTimeout = setTimeout(() => {
+          this.submitForm()
+        }, 500)
+      }
     }
   }
 
@@ -67,7 +81,24 @@ export default class extends Controller {
         sliderContainer.style.display = this.checkboxTarget.checked ? 'block' : 'none'
       }
     }
-    this.loadCompatibleTracks()
+
+    // For track show page (has trackIdValue), load compatible tracks via AJAX
+    if (this.trackIdValue) {
+      this.loadCompatibleTracks()
+    } else {
+      // For tracks index page, submit form if a track is selected
+      if (this.hasTrackSelectTarget && this.trackSelectTarget.value) {
+        this.submitForm()
+      }
+    }
+  }
+
+  // Submit the form for tracks index page
+  submitForm() {
+    const form = this.element.closest('form')
+    if (form) {
+      form.requestSubmit()
+    }
   }
 
   loadCompatibleTracks() {
@@ -149,85 +180,6 @@ export default class extends Controller {
     const div = document.createElement('div')
     div.textContent = text
     return div.innerHTML
-  }
-
-  // Filter tracks table by compatibility (for tracks index page)
-  filterByCompatibility(trackId) {
-    const bpmRange = this.hasCheckboxTarget && this.checkboxTarget.checked ? this.sliderTarget.value : null
-    const url = `/tracks/${trackId}/compatible`
-
-    const params = new URLSearchParams()
-    if (bpmRange) {
-      params.append('bpm_range', bpmRange)
-    }
-
-    fetch(`${url}?${params}`)
-      .then(response => response.json())
-      .then(data => {
-        // Get all compatible track IDs
-        const compatibleIds = new Set([
-          ...data.perfect.map(t => t.id),
-          ...data.smooth.map(t => t.id),
-          ...data.energy_boost.map(t => t.id)
-        ])
-
-        // Show/hide table rows based on compatibility
-        const table = document.querySelector('#tracks-table tbody')
-        if (table) {
-          const rows = table.querySelectorAll('tr')
-          rows.forEach(row => {
-            const trackId = parseInt(row.dataset.trackId)
-
-            if (trackId && compatibleIds.has(trackId)) {
-              row.style.display = ''
-              // Add compatibility badge
-              this.addCompatibilityBadge(row, trackId, data)
-            } else if (trackId) {
-              row.style.display = 'none'
-            }
-          })
-        }
-      })
-      .catch(error => {
-        console.error('Error filtering tracks:', error)
-      })
-  }
-
-  addCompatibilityBadge(row, trackId, data) {
-    // Determine compatibility type
-    let badge = ''
-    if (data.perfect.some(t => t.id === trackId)) {
-      badge = '<span class="badge bg-success ms-2">🟢 Perfect</span>'
-    } else if (data.smooth.some(t => t.id === trackId)) {
-      badge = '<span class="badge bg-primary ms-2">🔵 Smooth</span>'
-    } else if (data.energy_boost.some(t => t.id === trackId)) {
-      badge = '<span class="badge bg-warning ms-2">⚡ Energy</span>'
-    }
-
-    // Add badge to first cell if not already present
-    const firstCell = row.querySelector('td:first-child')
-    if (firstCell && badge && !firstCell.querySelector('.badge')) {
-      firstCell.innerHTML += badge
-    }
-  }
-
-  clearFilter() {
-    // Reset Tom Select
-    if (this.tomSelect) {
-      this.tomSelect.clear()
-    }
-
-    // Show all table rows
-    const table = document.querySelector('#tracks-table tbody')
-    if (table) {
-      const rows = table.querySelectorAll('tr')
-      rows.forEach(row => {
-        row.style.display = ''
-        // Remove compatibility badges
-        const badges = row.querySelectorAll('.badge.ms-2')
-        badges.forEach(badge => badge.remove())
-      })
-    }
   }
 
   showError(message) {

@@ -6,6 +6,28 @@ class TracksController < ApplicationController
 
     tracks = tracks.search(params[:search]) if params[:search].present?
 
+    # Handle harmonic compatibility filtering
+    if params[:compatible_with].present?
+      source_track = Track.find_by(id: params[:compatible_with])
+      if source_track
+        # Only apply BPM range if the checkbox is explicitly enabled
+        bpm_range = nil
+        bpm_range = params[:bpm_range].to_i if params[:enable_bpm_filter].present? && params[:bpm_range].present?
+
+        compatible_tracks = source_track.find_compatible(bpm_range: bpm_range)
+
+        # Collect all compatible track IDs
+        compatible_ids = [
+          compatible_tracks[:perfect],
+          compatible_tracks[:smooth],
+          compatible_tracks[:energy_boost]
+        ].flatten.map(&:id)
+
+        # Filter tracks to only include compatible ones
+        tracks = tracks.where(id: compatible_ids)
+      end
+    end
+
     if params[:sort].present? && params[:direction].present?
       column = params[:sort]
       direction = params[:direction]

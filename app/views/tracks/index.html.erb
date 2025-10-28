@@ -10,48 +10,76 @@
   <% end %>
 
   <!-- HARMONIC COMPATIBILITY FILTER -->
-  <div class="card mb-3" data-controller="harmonic-filter">
-    <div class="card-body">
-      <h5 class="card-title">Find Compatible Tracks</h5>
-      <div class="alert alert-info py-2 mb-3">
-        <small><i class="bi bi-info-circle"></i> <strong>Note:</strong> Filtering only works on the current page (<%= @tracks.size %> tracks). Use search or navigate pages to find more tracks.</small>
-      </div>
-      <div class="row align-items-end">
-        <div class="col-md-6">
-          <label for="compatibleWith" class="form-label">Show tracks compatible with:</label>
-          <select id="compatibleWith" class="form-select" data-harmonic-filter-target="trackSelect">
-            <option value="">Select a track...</option>
-            <% Track.includes(:artists, :key).order(:name).each do |track| %>
-              <option value="<%= track.id %>" data-key="<%= track.key&.name %>" data-bpm="<%= track.bpm %>">
-                <%= track.name %> - <%= track.artists.map(&:name).join(', ') %> (<%= track.key&.name %>, <%= track.bpm %> BPM)
-              </option>
-            <% end %>
-          </select>
-        </div>
-        <div class="col-md-4">
-          <div class="form-check mb-2">
-            <input class="form-check-input" type="checkbox" id="bpmFilterCheckboxIndex" data-harmonic-filter-target="checkbox" data-action="change->harmonic-filter#checkboxToggled">
-            <label class="form-check-label" for="bpmFilterCheckboxIndex">
-              Filter by BPM range
-            </label>
+  <%= form_with(url: tracks_path, method: :get, local: true, class: 'mb-3', data: { controller: 'harmonic-filter' }) do |f| %>
+    <div class="card">
+      <div class="card-body">
+        <h5 class="card-title">Find Compatible Tracks</h5>
+        <div class="row align-items-end">
+          <div class="col-md-6">
+            <label for="compatibleWith" class="form-label">Show tracks compatible with:</label>
+            <%= f.select :compatible_with,
+                options_for_select(
+                  [['Select a track...', '']] +
+                  Track.includes(:artists, :key).order(:name).map { |t|
+                    ["#{t.name} - #{t.artists.map(&:name).join(', ')} (#{t.key&.name}, #{t.bpm} BPM)", t.id]
+                  },
+                  params[:compatible_with]
+                ),
+                {},
+                {
+                  class: 'form-select',
+                  id: 'compatibleWith',
+                  data: {
+                    harmonic_filter_target: 'trackSelect',
+                    action: 'change->harmonic-filter#trackChanged'
+                  }
+                }
+            %>
+            <%= f.hidden_field :search, value: params[:search] %>
+            <%= f.hidden_field :sort, value: params[:sort] %>
+            <%= f.hidden_field :direction, value: params[:direction] %>
           </div>
-          <div class="bpm-slider-container">
-            <label for="bpmRangeIndex" class="form-label small">
-              <span data-harmonic-filter-target="sliderValue">±6 BPM</span>
-            </label>
-            <input type="range" class="form-range" id="bpmRangeIndex" min="0" max="20" value="6"
-                   data-harmonic-filter-target="slider"
-                   data-action="input->harmonic-filter#sliderChanged">
+          <div class="col-md-4">
+            <div class="form-check mb-2">
+              <%= f.check_box :enable_bpm_filter,
+                  {
+                    class: 'form-check-input',
+                    id: 'bpmFilterCheckboxIndex',
+                    checked: params[:enable_bpm_filter].present?,
+                    data: {
+                      harmonic_filter_target: 'checkbox',
+                      action: 'change->harmonic-filter#checkboxToggled'
+                    }
+                  }
+              %>
+              <label class="form-check-label" for="bpmFilterCheckboxIndex">
+                Filter by BPM range
+              </label>
+            </div>
+            <div class="bpm-slider-container" style="<%= 'display: none;' unless params[:enable_bpm_filter].present? %>">
+              <label for="bpmRangeIndex" class="form-label small">
+                <span data-harmonic-filter-target="sliderValue">±<%= params[:bpm_range] || 6 %> BPM</span>
+              </label>
+              <%= f.range_field :bpm_range,
+                  in: 0..20,
+                  value: params[:bpm_range] || 6,
+                  class: 'form-range',
+                  id: 'bpmRangeIndex',
+                  data: {
+                    harmonic_filter_target: 'slider',
+                    action: 'input->harmonic-filter#sliderChanged'
+                  }
+              %>
+            </div>
           </div>
-        </div>
-        <div class="col-md-2">
-          <button type="button" class="btn btn-secondary w-100" data-action="click->harmonic-filter#clearFilter">
-            Clear Filter
-          </button>
+          <div class="col-md-2">
+            <%= link_to 'Clear Filter', tracks_path(search: params[:search], sort: params[:sort], direction: params[:direction]),
+                class: 'btn btn-secondary w-100' %>
+          </div>
         </div>
       </div>
     </div>
-  </div>
+  <% end %>
 
   <div id="tracks-content">
     <!-- TABLE -->

@@ -9,6 +9,24 @@ This is a Rails 8.1 music archive application for managing DJ playlists. It allo
 Ruby version: 3.3.10
 Rails version: 8.1.0
 
+## Typical Usage Workflow
+
+This application is designed for **retrospective playlist analysis** - analyzing DJ sets after they've been played to learn from harmonic mixing decisions and build a searchable music archive.
+
+### The Workflow
+1. **Create a playlist in Rekordbox** - Mix tracks during a DJ set or while preparing a performance
+2. **Export from Rekordbox** - Export the playlist as a tab-delimited text file
+3. **Import into the app** - Upload the exported file to build the music archive incrementally
+4. **Analyze harmonic transitions** - Review how well tracks flowed together using the harmonic mixing assistant
+5. **Discover patterns** - Learn which key and BPM combinations work well for future sets
+6. **Maintain unique tracks** - The archive focuses on unique tracks across playlists, avoiding duplicates to encourage exploration of new music
+
+### Key Principles
+- **Retrospective analysis**: The app is not for planning future mixes, but for learning from past ones
+- **Unique track collection**: Each playlist should contain unique tracks not yet in the archive, maximizing the diversity of the music library
+- **Learning tool**: The harmonic mixing scores and compatibility filters help identify successful transitions and discover why certain tracks worked well together
+- **Growing archive**: As more playlists are imported, the searchable archive grows, making it easier to find tracks for future sets
+
 ## Development Commands
 
 ### Server and Development
@@ -82,6 +100,7 @@ yarn install
 - Uses ActiveStorage for audio file attachments
 - Fields: name, bpm (decimal), time (in seconds), album, date_added
 - Includes `search` class method for full-text search across track name, artist, key, BPM, and playlist
+  - Uses LEFT OUTER JOINs to include tracks even without associated playlists, keys, or artists
 
 **PlaylistsTrack** - Join table between Playlists and Tracks
 - Stores track order within playlist via `order` column
@@ -120,9 +139,11 @@ yarn install
 - Reorder: Updates track order via AJAX (uses `update_column` for performance)
 
 **TracksController**
-- Index with search functionality
+- Index with search functionality (full-text across database)
+- Server-side harmonic compatibility filtering with optional BPM range
 - Individual track display
 - Audio file upload endpoint
+- AJAX endpoint for compatible tracks (`/tracks/:id/compatible`)
 
 **ArtistsController & KeysController**
 - Index and show views for browsing
@@ -157,10 +178,10 @@ The harmonic mixing feature helps DJs find compatible tracks and analyze playlis
 - `Playlist#harmonic_analysis` - Full analysis with stats
 
 **UI Features**
-1. **Track Detail Page** (`tracks/show`): "Compatible Tracks" section with BPM slider (±0-20 BPM), results grouped by compatibility type
+1. **Track Detail Page** (`tracks/show`): "Compatible Tracks" section with BPM slider (±0-20 BPM), results grouped by compatibility type (AJAX loading)
 2. **Playlist Detail Page** (`playlists/show`): Harmonic flow score badge, transition quality indicators between tracks, quality breakdown stats
 3. **Playlist Index** (`playlists/index`): Color-coded harmonic score badges on cards (green ≥75%, yellow ≥50%, red <50%)
-4. **Tracks Index** (`tracks/index`): Searchable compatibility filter with BPM range (client-side filtering on current page only)
+4. **Tracks Index** (`tracks/index`): Server-side compatibility filter with BPM range that works across entire database, supports pagination and sorting
 
 **Stimulus Controllers**
 - `harmonic_filter_controller.js` - Handles BPM slider, checkbox toggle, track filtering, Tom Select dropdown
@@ -229,7 +250,14 @@ bundle exec rspec spec/models/playlist_spec.rb:25
 The application has comprehensive test coverage including:
 - **Model specs**: All models (Playlist, Track, Artist, Key, PlaylistsTrack) with associations, validations, and methods
 - **Service specs**: PlaylistImporter, CamelotWheelService, HarmonicMixingService
-- **Request specs**: All controllers (Playlists, Tracks, Artists, Keys)
+- **Request specs**: All controllers (Playlists, Tracks, Artists, Keys) with extensive tests for:
+  - Server-side compatibility filtering on tracks index
+  - BPM range filtering with enable/disable checkbox
+  - Combined search and compatibility filtering
+  - Pagination preservation across filter parameters
+  - Invalid parameter handling
+
+Current coverage: **87.78% line coverage** (388 / 442 lines)
 
 ### Test Infrastructure
 - **RSpec 7.1**: Main testing framework

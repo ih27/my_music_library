@@ -1,6 +1,7 @@
 # Harmonic Mixing Assistant - Feature Specification
 
 **Status:** ✅ Fully Implemented (2025-10-26)
+**Last Updated:** 2025-10-28 - Server-side filtering across entire database
 
 ## Overview
 Harmonic mixing assistance using Camelot Wheel notation to help find compatible tracks and analyze playlist transitions. This feature is now fully functional in the Music Archive application.
@@ -90,16 +91,21 @@ Track 5 (6A)
 ### Use Case 3: Track Index/Search - "Filter by Compatibility"
 **Location:** `tracks/index` page
 
-**User Story:** As a DJ, when browsing my library, I want to filter tracks that are compatible with a specific track.
+**User Story:** As a DJ, when browsing my library, I want to filter tracks that are compatible with a specific track across my entire database.
 
 **UI Elements:**
 - Dropdown: "Show tracks compatible with:" [Select a track]
-  - Searchable dropdown (typeahead)
+  - Searchable dropdown (typeahead via Tom Select)
   - Shows: "Track Name - Artist (Key, BPM)"
 - Checkbox: "Filter by BPM range"
 - BPM Range Slider: ±0 to ±20 BPM (default: ±6)
-- Active filters displayed as dismissible chips/tags
-- Results show compatibility badge next to each track
+- Results filtered server-side, supporting pagination and sorting
+
+**Behavior:**
+- Server-side filtering across entire database (not just current page)
+- Form submission triggers page reload with filtered results
+- Filter parameters preserved across pagination and sorting
+- Compatible with search functionality (can apply both filters simultaneously)
 
 ## Dependencies & Libraries
 
@@ -213,9 +219,16 @@ end
 
 #### `TracksController`
 ```ruby
+# Enhanced index action:
+def index
+  # Server-side compatibility filtering
+  # Params: compatible_with (track_id), enable_bpm_filter, bpm_range
+  # Preserves search, sort, and pagination parameters
+end
+
 # Add action:
 def compatible
-  # Returns JSON for AJAX requests
+  # Returns JSON for AJAX requests (used on track show page)
   # Params: track_id, bpm_range (optional)
 end
 ```
@@ -298,12 +311,14 @@ All planned features have been successfully implemented:
 
 **SQL Compatibility**
 - Fixed SQL reserved word issue: `playlists_tracks.order` → `playlists_tracks."order"` (quoted for SQLite)
+- Changed `Track.search` from `joins` to `left_joins` to include tracks without playlists
 
 **UI Adjustments**
-- Added info alert on tracks index explaining pagination limitation (client-side filtering)
+- Tracks index uses server-side filtering (form submission) instead of client-side JavaScript filtering
 - Harmonic score badges positioned at top-center of playlist cards (instead of separate section)
 - BPM slider visibility controlled via JavaScript (hidden by default)
 - Bootstrap icon fonts copied to `public/fonts/` for proper serving
+- Filter parameters persist across pagination and sorting via hidden form fields
 
 ### File Locations
 
@@ -338,8 +353,9 @@ All planned features have been successfully implemented:
 ### Performance Considerations
 - Harmonic analysis is computed on-demand (not cached)
 - Compatible track queries use proper indexes (key_id, bpm)
-- Client-side filtering on tracks index to avoid pagination complexity
+- Server-side filtering on tracks index with ActiveRecord query optimization
 - All Camelot calculations are pure Ruby (no database queries)
+- Track search uses LEFT OUTER JOINs for optimal performance with optional associations
 
 ### Testing Results
 ✅ Camelot wheel calculations verified for all transition types
@@ -348,10 +364,15 @@ All planned features have been successfully implemented:
 ✅ UI interactions (sliders, dropdowns, filters) working smoothly
 
 ### Known Limitations
-1. **Tracks Index Filtering**: Only filters visible tracks on current page (not full database)
-   - Workaround documented in UI with info alert
-   - For full filtering, users should use the Track Detail page
-2. **Tooltips**: Using browser native tooltips instead of Bootstrap fancy tooltips
+1. **Tooltips**: Using browser native tooltips instead of Bootstrap fancy tooltips
    - Still functional, just less visually polished
-3. **Performance**: Harmonic score calculation runs on every playlist page load
+2. **Performance**: Harmonic score calculation runs on every playlist page load
    - Consider caching for large playlists if performance becomes an issue
+
+### Recent Improvements (2025-10-28)
+✅ **Server-side Compatibility Filtering** - Tracks index now filters across entire database
+- Replaced client-side JavaScript filtering with form-based server-side filtering
+- Supports pagination (results properly filtered across all pages)
+- Works with search and sorting (filter parameters preserved)
+- BPM range checkbox properly toggles filter on/off
+- Comprehensive test coverage added (8 new test cases, 87.78% code coverage)

@@ -83,6 +83,104 @@ bundle install
 yarn install
 ```
 
+### Continuous Integration
+```bash
+# Run full CI suite (recommended before commits)
+bin/ci
+
+# This runs:
+# - bin/setup --skip-server (dependency check)
+# - bin/importmap audit (security vulnerabilities)
+# - bundle exec rubocop (code quality)
+# - bundle exec rspec (test suite)
+# - env RAILS_ENV=test bin/rails db:seed:replant (seed verification)
+```
+
+## Development Workflow
+
+When implementing features, fixes, or improvements, follow this workflow to ensure code quality and maintainability:
+
+### 1. Implement the Feature/Fix
+- Make code changes to implement the requested functionality
+- Follow existing code patterns and conventions
+- Update relevant documentation files (CLAUDE.md, HARMONIC_MIXING_SPEC.md, etc.)
+
+### 2. Add/Modify/Optimize Tests
+- **Always** add test coverage for new features
+- Modify existing tests if behavior changed
+- Optimize test suite for clarity and maintainability
+- Aim for high code coverage (target: >85%)
+
+```bash
+# Run specific test file
+bundle exec rspec spec/path/to/spec.rb
+
+# Run all tests
+bundle exec rspec
+```
+
+### 3. Run Full CI Suite
+Before considering the work complete, **always run the full CI suite**:
+
+```bash
+bin/ci
+```
+
+This ensures:
+- ✅ All tests pass
+- ✅ Code style is compliant (RuboCop)
+- ✅ No security vulnerabilities
+- ✅ Database seeds work correctly
+
+### 4. Prepare for Commit
+Once `bin/ci` passes successfully, the code is ready for committing. Use **conventional commit messages**:
+
+#### Commit Message Format
+```
+<type>: <description>
+
+[optional body]
+
+[optional footer]
+```
+
+#### Commit Types
+- `feat:` - New feature (e.g., "feat: add server-side compatibility filtering")
+- `fix:` - Bug fix (e.g., "fix: resolve search query for tracks without playlists")
+- `chore:` - Maintenance tasks (e.g., "chore: update dependencies")
+- `docs:` - Documentation only (e.g., "docs: update CLAUDE.md with workflow guidelines")
+- `style:` - Code style changes (e.g., "style: fix RuboCop offenses")
+- `refactor:` - Code refactoring without behavior change
+- `test:` - Adding or updating tests
+- `perf:` - Performance improvements
+
+#### Examples
+```bash
+git add .
+git commit -m "feat: implement server-side harmonic compatibility filtering
+
+- Add compatibility filtering to TracksController#index
+- Support BPM range toggle with enable_bpm_filter param
+- Preserve filter parameters across pagination and sorting
+- Add 8 comprehensive test cases (87.78% coverage)
+- Update CLAUDE.md and HARMONIC_MIXING_SPEC.md"
+
+git commit -m "fix: use LEFT OUTER JOINs in Track.search for better coverage"
+
+git commit -m "test: add comprehensive specs for compatibility filtering"
+
+git commit -m "docs: document retrospective usage workflow in CLAUDE.md"
+```
+
+### 5. Code Review Checklist
+Before committing, verify:
+- [ ] Feature/fix works as expected
+- [ ] Tests added and passing (bin/ci ✅)
+- [ ] RuboCop compliant
+- [ ] Documentation updated (CLAUDE.md, specs, comments)
+- [ ] No security vulnerabilities
+- [ ] Conventional commit message prepared
+
 ## Architecture
 
 ### Core Data Models

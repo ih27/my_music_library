@@ -1,4 +1,4 @@
-<div class="container mt-4">
+<div class="container mt-4" data-controller="set-builder">
   <h1 class="text-center">Tracks</h1>
 
   <!-- SEARCH BAR -->
@@ -86,6 +86,12 @@
     <table id="tracks-table" class="table table-striped table-hover" data-controller="sort">
       <thead class="thead-dark">
       <tr>
+        <th style="width: 40px;">
+          <input type="checkbox"
+                 class="form-check-input"
+                 data-set-builder-target="selectAll"
+                 data-action="change->set-builder#toggleAll">
+        </th>
         <th data-action="click->sort#sort" data-sort-column="name" class="sortable">Name <%= sort_icon('name') %></th>
         <th data-action="click->sort#sort" data-sort-column="artists.name" class="sortable">Artist(s) <%= sort_icon('artists.name') %></th>
         <th data-action="click->sort#sort" data-sort-column="keys.name" class="sortable">Key <%= sort_icon('keys.name') %></th>
@@ -100,6 +106,13 @@
       <tbody>
       <% @tracks.each do |track| %>
         <tr data-track-id="<%= track.id %>">
+          <td>
+            <input type="checkbox"
+                   class="form-check-input"
+                   value="<%= track.id %>"
+                   data-set-builder-target="checkbox"
+                   data-action="change->set-builder#toggleTrack">
+          </td>
           <td><%= link_to track.name, track_path(track), class: 'text-decoration-none text-dark' %></td>
           <td>
             <% track.artists.each do |artist| %>
@@ -136,6 +149,99 @@
     <!-- PAGINATION -->
     <div class="d-flex justify-content-center">
       <%== pagy_bootstrap_nav(@pagy) if @pagy.pages > 1 %>
+    </div>
+  </div>
+
+  <!-- Fixed Bottom Toolbar (Hidden by default) -->
+  <div class="set-builder-toolbar" data-set-builder-target="toolbar">
+    <div class="container d-flex justify-content-between align-items-center">
+      <span data-set-builder-target="selectedCount" class="fw-bold">0 tracks selected</span>
+      <div class="btn-group">
+        <button type="button"
+                class="btn btn-success"
+                data-action="click->set-builder#showModal">
+          <i class="bi bi-plus-lg"></i> Add to Set
+        </button>
+        <button type="button"
+                class="btn btn-secondary"
+                data-action="click->set-builder#clearSelection">
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Set Selection Modal -->
+  <div class="modal fade" id="setSelectionModal" tabindex="-1" aria-labelledby="setSelectionModalLabel" aria-hidden="true" data-set-builder-target="modal">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="setSelectionModalLabel">Add Tracks to Set</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p class="text-muted">
+            Add <strong><span data-set-builder-target="modalCount">0</span> track(s)</strong> to:
+          </p>
+
+          <!-- Existing Sets List -->
+          <% if DjSet.any? %>
+            <div class="mb-3">
+              <label class="form-label fw-bold">Existing Sets:</label>
+              <div class="list-group" data-set-builder-target="setList">
+                <% DjSet.order(updated_at: :desc).limit(10).each do |dj_set| %>
+                  <button type="button"
+                          class="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
+                          data-action="click->set-builder#selectSet"
+                          data-set-id="<%= dj_set.id %>">
+                    <div>
+                      <strong><%= dj_set.name %></strong>
+                      <br>
+                      <small class="text-muted"><%= dj_set.tracks.count %> tracks</small>
+                    </div>
+                    <i class="bi bi-chevron-right"></i>
+                  </button>
+                <% end %>
+              </div>
+            </div>
+            <hr>
+          <% end %>
+
+          <!-- Create New Set -->
+          <div>
+            <label class="form-label fw-bold">Or Create New Set:</label>
+            <%= form_with model: DjSet.new, url: dj_sets_path, method: :post, data: { set_builder_target: 'newSetForm', action: 'submit->set-builder#submitNewSet' } do |f| %>
+              <%= hidden_field_tag 'track_ids[]', '', multiple: true, data: { set_builder_target: 'trackIdsInput' } %>
+
+              <div class="mb-3" data-controller="character-counter">
+                <%= f.label :name, 'Set Name', class: 'form-label' %>
+                <%= f.text_field :name, class: 'form-control', required: true, maxlength: 100, placeholder: 'e.g., Friday Night Set' %>
+              </div>
+
+              <div class="mb-3" data-controller="character-counter">
+                <%= f.label :description, class: 'form-label' %>
+                <%= f.text_area :description,
+                    class: 'form-control',
+                    rows: 2,
+                    maxlength: 500,
+                    placeholder: 'Optional description...',
+                    data: {
+                      character_counter_target: "input",
+                      action: "input->character-counter#updateCount"
+                    } %>
+                <small class="text-muted">
+                  <span data-character-counter-target="counter">0</span> / 500 characters
+                </small>
+              </div>
+
+              <div class="d-flex gap-2">
+                <%= f.submit 'Create & Add Tracks', class: 'btn btn-success flex-grow-1' %>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </div>

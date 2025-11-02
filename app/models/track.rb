@@ -4,6 +4,8 @@ class Track < ApplicationRecord
   belongs_to :key, optional: true
   has_many :playlists_tracks, dependent: :destroy
   has_many :playlists, through: :playlists_tracks
+  has_many :dj_sets_tracks, dependent: :destroy
+  has_many :dj_sets, through: :dj_sets_tracks
   has_and_belongs_to_many :artists
   has_one_attached :audio_file
 

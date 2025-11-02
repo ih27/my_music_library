@@ -16,6 +16,18 @@ Rails.application.routes.draw do
     end
   end
 
+  resources :dj_sets do
+    member do
+      post :add_tracks
+      delete "remove_track/:track_id", to: "dj_sets#remove_track", as: :remove_track
+      delete :remove_tracks
+      patch :reorder_tracks
+      post :duplicate
+      get :export
+      post :convert_to_playlist
+    end
+  end
+
   # Defines the root path route ("/")
   root "playlists#index"
 end

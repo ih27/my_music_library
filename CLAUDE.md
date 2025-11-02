@@ -185,11 +185,28 @@ Before committing, verify:
 
 ### Core Data Models
 
-**Playlist** - Container for ordered tracks
+**Playlist** - Container for ordered tracks (imported from Rekordbox exports)
 - Has many tracks through `playlists_tracks` join table
 - Uses ActiveStorage for cover art attachments
 - Auto-attaches default cover art on creation (`app/assets/images/default_cover_art.jpg`)
 - Has `unique_identifier` method that creates track order signature for duplicate detection
+- Read-only after creation (retrospective analysis focus)
+
+**DjSet** - Manually curated track collections for planning future mixes
+- Has many tracks through `dj_sets_tracks` join table
+- Fully editable: add, remove, reorder tracks
+- Unique name validation (case-insensitive, max 100 chars)
+- Optional description (max 500 chars)
+- Supports harmonic flow analysis like Playlists
+- Can be duplicated, exported to file, or converted to Playlist
+- Methods: `ordered_tracks`, `harmonic_flow_score`, `harmonic_analysis`, `duplicate`, `export_to_file`, `convert_to_playlist`
+
+**DjSetsTrack** - Join table between DjSets and Tracks
+- Stores track order within set via `order` column
+- Primary key: auto-incrementing id
+- Uniqueness validation: prevents duplicate tracks in same set
+- Automatically resequenced after add/remove operations to maintain sequential order (1, 2, 3...)
+- Can be reordered via `dj_sets#reorder_tracks` endpoint (drag-and-drop UI)
 
 **Track** - Individual music track
 - Belongs to optional Key (musical key like "A Major", "C# Minor")
@@ -236,12 +253,22 @@ Before committing, verify:
 - Destroy: Deletes playlist and orphaned tracks/artists (cascading cleanup)
 - Reorder: Updates track order via AJAX (uses `update_column` for performance)
 
+**DjSetsController**
+- Full CRUD operations for DJ sets
+- Add Tracks: Adds multiple tracks to set with sequential ordering
+- Remove Track(s): Single or bulk removal with automatic resequencing
+- Reorder: Drag-and-drop track reordering via AJAX (returns updated harmonic score)
+- Duplicate: Creates copy of set with new name
+- Export: Downloads set as tab-delimited file (compatible with PlaylistImporter)
+- Convert to Playlist: Transforms set into a playlist, optionally deleting original
+
 **TracksController**
 - Index with search functionality (full-text across database)
 - Server-side harmonic compatibility filtering with optional BPM range
 - Individual track display
 - Audio file upload endpoint
 - AJAX endpoint for compatible tracks (`/tracks/:id/compatible`)
+- **Set Builder Integration**: Multi-select UI with sessionStorage persistence across pagination
 
 **ArtistsController & KeysController**
 - Index and show views for browsing
@@ -274,16 +301,37 @@ The harmonic mixing feature helps DJs find compatible tracks and analyze playlis
 - `Playlist#analyze_transitions` - Returns array of transition objects
 - `Playlist#harmonic_flow_score` - Returns 0-100 score
 - `Playlist#harmonic_analysis` - Full analysis with stats
+- `DjSet#analyze_transitions` - Same as Playlist
+- `DjSet#harmonic_flow_score` - Same as Playlist
+- `DjSet#harmonic_analysis` - Same as Playlist
+- `DjSet#duplicate(new_name:)` - Creates copy of set
+- `DjSet#export_to_file` - Exports as tab-delimited text
+- `DjSet#convert_to_playlist(name:, cover_art:, description:)` - Converts to Playlist
 
 **UI Features**
 1. **Track Detail Page** (`tracks/show`): "Compatible Tracks" section with BPM slider (±0-20 BPM), results grouped by compatibility type (AJAX loading)
 2. **Playlist Detail Page** (`playlists/show`): Harmonic flow score badge, transition quality indicators between tracks, quality breakdown stats
 3. **Playlist Index** (`playlists/index`): Color-coded harmonic score badges on cards (green ≥75%, yellow ≥50%, red <50%)
 4. **Tracks Index** (`tracks/index`): Server-side compatibility filter with BPM range that works across entire database, supports pagination and sorting
+5. **DJ Sets Index** (`dj_sets/index`): List of all sets with track count, BPM average, duration, harmonic score badges
+6. **DJ Set Detail** (`dj_sets/show`): Full track listing with drag-and-drop reordering, bulk track removal, harmonic analysis, transition indicators
+
+**Set Builder Feature** (See [SET_BUILDER_SPEC.md](SET_BUILDER_SPEC.md) for full specification)
+- **Track Selection UI**: Multi-select checkboxes on tracks index page
+- **Persistence**: Uses sessionStorage to maintain selections across pagination/filtering
+- **Select All**: Header checkbox with indeterminate state support
+- **Bottom Toolbar**: Fixed toolbar showing selection count and action buttons (appears when tracks selected)
+- **Modal Dialog**: Choose existing set or create new set with name/description
+- **Add Tracks**: POST to `/dj_sets/:id/add_tracks` with automatic ordering
+- **Bulk Removal**: Multi-select with confirmation dialog, automatic resequencing
+- **Drag-and-Drop Reordering**: SortableJS integration with real-time harmonic score updates
 
 **Stimulus Controllers**
 - `harmonic_filter_controller.js` - Handles BPM slider, checkbox toggle, track filtering, Tom Select dropdown
 - `transition_indicator_controller.js` - Adds native browser tooltips to transition indicators using HTML `title` attribute (not Bootstrap tooltips - simpler, no dependencies)
+- `set_builder_controller.js` - Manages track selection, sessionStorage persistence, toolbar visibility, modal interactions
+- `sortable_controller.js` - Drag-and-drop track reordering for DJ sets (uses SortableJS library)
+- `track_remover_controller.js` - Bulk track removal with select all/none functionality
 
 ### File Organization
 
@@ -346,23 +394,30 @@ bundle exec rspec spec/models/playlist_spec.rb:25
 
 ### Test Coverage
 The application has comprehensive test coverage including:
-- **Model specs**: All models (Playlist, Track, Artist, Key, PlaylistsTrack) with associations, validations, and methods
+- **Model specs**: All models (Playlist, Track, Artist, Key, PlaylistsTrack, DjSet, DjSetsTrack) with associations, validations, and methods
 - **Service specs**: PlaylistImporter, CamelotWheelService, HarmonicMixingService
-- **Request specs**: All controllers (Playlists, Tracks, Artists, Keys) with extensive tests for:
+- **Request specs**: All controllers (Playlists, Tracks, Artists, Keys, DjSets) with extensive tests for:
   - Server-side compatibility filtering on tracks index
   - BPM range filtering with enable/disable checkbox
   - Combined search and compatibility filtering
   - Pagination preservation across filter parameters
   - Invalid parameter handling
+  - **DJ Sets**: Full CRUD operations, track management (add/remove/reorder), bulk operations, duplication, export, conversion to playlist
 
-Current coverage: **87.78% line coverage** (388 / 442 lines)
+**DJ Sets Test Suite** (101 examples, 0 failures):
+- Model validations (uniqueness, length constraints)
+- Track ordering and resequencing
+- Harmonic analysis integration
+- Duplicate, export, and convert_to_playlist methods
+- Controller actions: add_tracks, remove_track, remove_tracks (bulk), reorder_tracks
+- Drag-and-drop reordering with harmonic score updates
 
 ### Test Infrastructure
 - **RSpec 7.1**: Main testing framework
-- **FactoryBot**: Test data factories for all models
+- **FactoryBot**: Test data factories for all models (including DJ Sets)
 - **Faker**: Realistic fake data generation
 - **Shoulda Matchers**: Simplified validation/association testing
-- **DatabaseCleaner**: Ensures clean test database state
+- **ActiveSupport::Testing::TimeHelpers**: Time travel support for timestamp testing
 
 ### Code Quality
 ```bash

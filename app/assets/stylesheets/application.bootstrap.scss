@@ -111,7 +111,6 @@
 
 body {
   padding-top: 70px; /* Adjust based on the height of your navbar */
-  padding-bottom: 70px; /* Adjust based on the height of your footer */
 }
 
 .form-control-file {
@@ -268,4 +267,71 @@ body {
   font-weight: bold;
   padding: 0.4rem 0.8rem;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* DJ Set Card Styles (Visual distinction from playlists) */
+.card-dj-set {
+  border-left: 4px solid #28a745 !important; /* Green accent for sets */
+  min-height: 300px;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.card-dj-set:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.card-dj-set .card-body {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Playlist card - Blue accent for comparison */
+.card-playlist {
+  border-left: 4px solid #007bff !important; /* Blue accent for playlists */
+}
+
+/* Set builder toolbar (for track selection) */
+.set-builder-toolbar {
+  position: fixed;
+  bottom: 0; /* Position at bottom of viewport */
+  left: 0;
+  right: 0;
+  background: #fff;
+  border-top: 2px solid #28a745;
+  padding: 1rem;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+  z-index: 1040;
+  display: none;
+
+  &.active {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+}
+
+/* Smooth transition for tracks container when toolbar appears */
+[data-controller~="set-builder"] {
+  transition: padding-bottom 0.3s ease;
+}
+
+/* Track remover toolbar (for removing multiple tracks from set) */
+.track-remover-toolbar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #fff;
+  border-top: 2px solid #dc3545;
+  padding: 1rem;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+  z-index: 1040;
+  display: none;
+
+  &.active {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
 }

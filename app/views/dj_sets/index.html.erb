@@ -1,0 +1,76 @@
+<div class="container mt-4">
+  <h1 class="text-center">My Sets</h1>
+  <p class="text-center text-muted">Planned sets for future performances</p>
+
+  <% if @dj_sets.empty? %>
+    <div class="text-center py-5">
+      <p class="text-muted fs-5">No sets yet. Start building your first set!</p>
+      <%= link_to 'Browse Tracks', tracks_path, class: 'btn btn-primary me-2' %>
+      <%= link_to 'Create New Set', new_dj_set_path, class: 'btn btn-success' %>
+    </div>
+  <% else %>
+    <div class="row">
+      <% @dj_sets.each do |dj_set| %>
+        <div class="col-md-3 col-sm-6 mb-4">
+          <div class="card-common card-dj-set text-dark position-relative">
+            <div class="card-header d-flex justify-content-between align-items-center p-2">
+              <%= link_to 'x', dj_set_path(dj_set), method: :delete, data: { confirm: "Delete #{dj_set.name}?" }, class: 'btn btn-danger btn-sm' %>
+              <h5 class="mb-0 ml-auto"><%= dj_set.name %></h5>
+            </div>
+            <%= link_to dj_set_path(dj_set), class: 'card-link' do %>
+              <div class="card-body p-3 bg-light" style="min-height: 200px;">
+                <% score = dj_set.harmonic_flow_score %>
+                <% if dj_set.tracks.count >= 2 %>
+                  <div class="text-center mb-3">
+                    <span class="badge fs-5 <%= score >= 75 ? 'bg-success' : score >= 50 ? 'bg-warning' : 'bg-danger' %>">
+                      <%= score.round %>%
+                    </span>
+                    <div class="text-muted small">Harmonic Flow</div>
+                  </div>
+                <% end %>
+
+                <% if dj_set.description.present? %>
+                  <p class="text-muted small mb-2"><%= truncate(dj_set.description, length: 100) %></p>
+                <% end %>
+
+                <div class="small text-muted mt-auto">
+                  <div class="d-flex justify-content-between mb-1">
+                    <span><i class="bi bi-music-note"></i> <%= dj_set.tracks.count %> tracks</span>
+                  </div>
+                  <div class="d-flex justify-content-between mb-1">
+                    <span><i class="bi bi-clock"></i> <%= dj_set.total_duration_formatted %></span>
+                  </div>
+                  <% if dj_set.average_bpm > 0 %>
+                    <div class="d-flex justify-content-between mb-1">
+                      <span><i class="bi bi-speedometer"></i> <%= dj_set.average_bpm %> BPM avg</span>
+                    </div>
+                  <% end %>
+                  <div class="d-flex justify-content-between">
+                    <span><i class="bi bi-calendar"></i> <%= time_ago_in_words(dj_set.updated_at) %> ago</span>
+                  </div>
+                </div>
+              </div>
+            <% end %>
+            <div class="card-footer p-2 d-flex justify-content-center gap-2">
+              <%= link_to edit_dj_set_path(dj_set), class: 'btn btn-sm btn-outline-secondary', title: 'Edit' do %>
+                <i class="bi bi-pencil"></i>
+              <% end %>
+              <%= link_to export_dj_set_path(dj_set), class: 'btn btn-sm btn-outline-success', title: 'Export' do %>
+                <i class="bi bi-download"></i>
+              <% end %>
+            </div>
+          </div>
+        </div>
+      <% end %>
+
+      <!-- "Create New Set" Card -->
+      <div class="col-md-3 col-sm-6 mb-4">
+        <div class="card-common card-dj-set text-dark position-relative d-flex align-items-center justify-content-center" style="min-height: 300px;">
+          <%= link_to new_dj_set_path, class: 'btn btn-success btn-lg' do %>
+            <i class="bi bi-plus-lg"></i> New Set
+          <% end %>
+        </div>
+      </div>
+    </div>
+  <% end %>
+</div>

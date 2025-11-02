@@ -8,28 +8,40 @@ export default class extends Controller {
 
   initializeSortable() {
     const el = this.element.querySelector('tbody');
-    const reorderUrl = this.element.dataset.reorderUrl; // Ensure the correct data attribute is accessed
+    const reorderUrl = this.element.dataset.reorderUrl;
 
     Sortable.create(el, {
       animation: 150,
+      handle: '.drag-handle',
+      filter: '.transition-row',
       onEnd: (evt) => {
         const order = [];
-        const rows = el.getElementsByTagName('tr');
-        for (let i = 0; i < rows.length; i++) {
+        const rows = el.querySelectorAll('tr[data-id]');
+
+        rows.forEach((row, index) => {
           order.push({
-            id: rows[i].getAttribute('data-id'),
-            order: i + 1
+            id: row.getAttribute('data-id'),
+            order: index + 1
           });
-          // Update the order number in the table
-          rows[i].querySelector('.order-cell').textContent = i + 1;
-        }
-        fetch(reorderUrl, { // Use the correct reorder URL
+        });
+
+        fetch(reorderUrl, {
           method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',
             'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
           },
           body: JSON.stringify({ order: order })
+        }).then(response => {
+          if (response.ok) {
+            // Reload page to show updated track numbers, transitions, and harmonic score
+            window.location.reload();
+          } else {
+            alert('Error reordering tracks. Please try again.');
+          }
+        }).catch(error => {
+          console.error('Error:', error);
+          alert('Error reordering tracks. Please try again.');
         });
       }
     });

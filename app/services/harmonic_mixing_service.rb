@@ -51,12 +51,22 @@ class HarmonicMixingService
     }
   end
 
-  # Analyze transitions in a playlist
+  # Analyze transitions in a playlist or DJ set
   #
-  # @param playlist [Playlist] The playlist to analyze
+  # @param collection [Playlist, DjSet] The playlist or set to analyze
   # @return [Hash] Hash with :transitions array and :score
-  def self.analyze_playlist_transitions(playlist)
-    tracks = playlist.tracks.order('playlists_tracks."order"')
+  def self.analyze_playlist_transitions(collection)
+    # Determine the correct join table based on the class
+    join_table = case collection
+                 when Playlist
+                   "playlists_tracks"
+                 when DjSet
+                   "dj_sets_tracks"
+                 else
+                   raise ArgumentError, "Unsupported collection type: #{collection.class}"
+                 end
+
+    tracks = collection.tracks.order("#{join_table}.\"order\"")
     transitions = []
 
     tracks.each_cons(2) do |from_track, to_track|

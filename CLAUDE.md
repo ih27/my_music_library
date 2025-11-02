@@ -231,19 +231,33 @@ Before committing, verify:
 - Unique constraint on name
 - Optional relationship with tracks
 
-### Playlist Import System
+### Track Import System
 
-**PlaylistImporter** (`app/services/playlist_importer.rb`)
-- Parses tab-delimited files exported from DJ software
+The import system uses a class hierarchy to share common file parsing logic between Playlists and DJ Sets.
+
+**TrackImporter** (`app/services/track_importer.rb`) - Base class
+- Shared file parsing logic for all importers
 - Required headers: `#`, `Track Title`, `Artist`, `BPM`, `Date Added`
 - Optional headers: `Key`, `Time`, `Album`
 - Handles flexible column ordering (headers can be in any order)
 - Uses rchardet (pure Ruby) for encoding detection (handles non-UTF-8 files)
 - Processes BOM (Byte Order Mark) removal
 - Creates/finds tracks, artists, and keys during import
-- Validates duplicate playlists by comparing track IDs
-- Wrapped in database transaction for atomicity
 - Multiple artists per track supported (comma-separated in file)
+
+**PlaylistImporter** (`app/services/playlist_importer.rb`) - Inherits from TrackImporter
+- Creates playlists from tab-delimited files (e.g., Rekordbox exports)
+- Validates duplicate playlists by comparing track IDs (prevents importing same playlist twice)
+- Wrapped in database transaction for atomicity
+- Read-only after creation (retrospective analysis focus)
+
+**DjSetImporter** (`app/services/dj_set_importer.rb`) - Inherits from TrackImporter
+- Imports tracks into DJ Sets from tab-delimited files
+- Can create new sets OR append tracks to existing sets
+- No duplicate detection (allows importing similar track lists into different sets)
+- Automatically resequences tracks after import to ensure sequential order (1, 2, 3...)
+- Skips tracks that already exist in the target set
+- Wrapped in database transaction for atomicity
 
 ### Controller Responsibilities
 
@@ -255,11 +269,13 @@ Before committing, verify:
 
 **DjSetsController**
 - Full CRUD operations for DJ sets
-- Add Tracks: Adds multiple tracks to set with sequential ordering
+- **Create with Import**: Create new set from file upload (extracts name from filename)
+- **Import Tracks**: Append tracks to existing set from file upload (`/dj_sets/:id/import_tracks`)
+- Add Tracks: Adds multiple tracks to set with sequential ordering (from Set Builder)
 - Remove Track(s): Single or bulk removal with automatic resequencing
 - Reorder: Drag-and-drop track reordering via AJAX (returns updated harmonic score)
 - Duplicate: Creates copy of set with new name
-- Export: Downloads set as tab-delimited file (compatible with PlaylistImporter)
+- Export: Downloads set as tab-delimited file (compatible with both importers)
 - Convert to Playlist: Transforms set into a playlist, optionally deleting original
 
 **TracksController**

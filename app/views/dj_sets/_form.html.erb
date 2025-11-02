@@ -1,16 +1,40 @@
-<%= form_with model: dj_set, class: 'card' do |f| %>
+<%= form_with model: dj_set, class: 'card', multipart: true, data: { controller: dj_set.new_record? ? "fileselector" : "" } do |f| %>
   <div class="card-body">
+    <% if dj_set.new_record? %>
+      <!-- Import from File (New Sets Only) -->
+      <div class="mb-4 p-3 bg-light rounded">
+        <h6 class="mb-2">Import Tracks from File (Optional)</h6>
+        <label class="btn btn-secondary w-100">
+          <span data-fileselector-target="setFileLabel">Select Set File</span>
+          <%= f.file_field :file, class: 'form-control-file d-none', accept: '.txt', data: { fileselector_target: "setFile" } %>
+        </label>
+        <small class="text-muted d-block mt-2">
+          Upload a tab-delimited file to create a set with tracks. The set name will be extracted from the filename. If no file is provided, an empty set will be created.
+        </small>
+      </div>
+
+      <div class="text-center mb-3">
+        <strong class="text-muted">— OR —</strong>
+      </div>
+    <% end %>
+
     <!-- Name -->
     <div class="mb-3">
       <%= f.label :name, class: 'form-label' %>
-      <%= f.text_field :name, class: 'form-control', required: true, maxlength: 100, placeholder: 'e.g., Friday Night House Set' %>
+      <%= f.text_field :name, class: 'form-control', required: dj_set.persisted?, maxlength: 100, placeholder: 'e.g., Friday Night House Set' %>
       <% if dj_set.errors[:name].any? %>
         <div class="alert alert-danger alert-dismissible fade show mt-2 mb-0" role="alert">
           <%= dj_set.errors[:name].first %>
           <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
       <% end %>
-      <small class="text-muted">Must be unique</small>
+      <small class="text-muted">
+        <% if dj_set.new_record? %>
+          Must be unique. Leave blank if importing from file.
+        <% else %>
+          Must be unique
+        <% end %>
+      </small>
     </div>
 
     <!-- Description -->

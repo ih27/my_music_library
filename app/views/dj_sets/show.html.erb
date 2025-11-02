@@ -39,6 +39,9 @@
         <%= link_to edit_dj_set_path(@dj_set), class: 'btn btn-outline-secondary' do %>
           <i class="bi bi-pencil"></i> Edit
         <% end %>
+        <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#importModal">
+          <i class="bi bi-file-earmark-arrow-up"></i> Import Tracks
+        </button>
         <%= button_to duplicate_dj_set_path(@dj_set), method: :post, class: 'btn btn-outline-primary' do %>
           <i class="bi bi-files"></i> Duplicate
         <% end %>
@@ -189,6 +192,42 @@
         <div class="text-center py-5">
           <p class="text-muted">No tracks in this set yet.</p>
           <%= link_to 'Browse Tracks', tracks_path(dj_set_id: @dj_set.id), class: 'btn btn-primary' %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<!-- Import Tracks Modal -->
+<div class="modal fade" id="importModal" tabindex="-1" aria-labelledby="importModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <%= form_with url: import_tracks_dj_set_path(@dj_set), method: :post, multipart: true, data: { controller: "fileselector" } do |f| %>
+        <div class="modal-header">
+          <h5 class="modal-title" id="importModalLabel">Import Tracks from File</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+
+        <div class="modal-body">
+          <p class="text-muted">Import tracks from a tab-delimited file. Tracks will be appended to the end of this set.</p>
+
+          <!-- File Upload -->
+          <div class="mb-3">
+            <label class="btn btn-secondary w-100">
+              <span data-fileselector-target="setFileLabel">Select Set File</span>
+              <%= f.file_field :file, accept: '.txt', class: 'form-control-file d-none', required: true, data: { fileselector_target: "setFile" } %>
+            </label>
+            <small class="text-muted d-block mt-2">Tab-delimited text file (.txt)</small>
+          </div>
+
+          <div class="alert alert-info mb-0">
+            <i class="bi bi-info-circle"></i> <strong>Note:</strong> Duplicate tracks will be skipped automatically.
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <%= f.submit 'Import Tracks', class: 'btn btn-primary' %>
         </div>
       <% end %>
     </div>

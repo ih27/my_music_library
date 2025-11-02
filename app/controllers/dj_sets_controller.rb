@@ -1,9 +1,11 @@
 # frozen_string_literal: true
 
+# rubocop:disable Metrics/ClassLength
 class DjSetsController < ApplicationController
   before_action :set_dj_set, only: %i[show edit update destroy duplicate
                                       export convert_to_playlist add_tracks
-                                      remove_track remove_tracks reorder_tracks]
+                                      remove_track remove_tracks reorder_tracks
+                                      import_tracks]
 
   # GET /dj_sets
   def index
@@ -23,14 +25,33 @@ class DjSetsController < ApplicationController
 
   # POST /dj_sets
   def create
-    @dj_set = DjSet.new(dj_set_params)
+    file = params.dig(:dj_set, :file)
 
-    if @dj_set.save
-      # Add tracks if coming from track selection
-      add_selected_tracks_to_set if params[:track_ids].present?
-      redirect_to @dj_set, notice: "#{@dj_set.name} created successfully"
+    # Mode 1: Import from file
+    if file.present?
+      # Extract name from filename (without extension)
+      set_name = File.basename(file.original_filename, File.extname(file.original_filename))
+      @dj_set = DjSet.new(name: set_name, description: dj_set_params[:description])
+
+      importer = DjSetImporter.new(@dj_set, file)
+      if importer.call
+        redirect_to @dj_set, notice: "#{@dj_set.name} created successfully with #{@dj_set.tracks.count} tracks"
+      else
+        Rails.logger.info "DJ Set import failed: Invalid data or file error"
+        flash.now[:alert] = "Failed to import DJ Set. Please check the file format."
+        render :new, status: :unprocessable_entity
+      end
+    # Mode 2: Create empty set or add selected tracks
     else
-      render :new, status: :unprocessable_entity
+      @dj_set = DjSet.new(dj_set_params)
+
+      if @dj_set.save
+        # Add tracks if coming from track selection
+        add_selected_tracks_to_set if params[:track_ids].present?
+        redirect_to @dj_set, notice: "#{@dj_set.name} created successfully"
+      else
+        render :new, status: :unprocessable_entity
+      end
     end
   end
 
@@ -158,6 +179,24 @@ class DjSetsController < ApplicationController
     redirect_to @dj_set, alert: "Error converting: #{e.message}"
   end
 
+  # POST /dj_sets/:id/import_tracks
+  def import_tracks
+    file = params[:file]
+
+    if file.blank?
+      redirect_to @dj_set, alert: "Please select a file to import"
+      return
+    end
+
+    importer = DjSetImporter.new(@dj_set, file)
+    if importer.call
+      @dj_set.reload
+      redirect_to @dj_set, notice: "Successfully imported tracks. Set now has #{@dj_set.tracks.count} tracks."
+    else
+      redirect_to @dj_set, alert: "Failed to import tracks. Please check the file format."
+    end
+  end
+
   private
 
   def set_dj_set
@@ -165,7 +204,7 @@ class DjSetsController < ApplicationController
   end
 
   def dj_set_params
-    params.expect(dj_set: %i[name description])
+    params.expect(dj_set: %i[name description file])
   end
 
   def sort_column
@@ -192,3 +231,4 @@ class DjSetsController < ApplicationController
     end
   end
 end
+# rubocop:enable Metrics/ClassLength

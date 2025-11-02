@@ -25,6 +25,7 @@ Rails.application.routes.draw do
       post :duplicate
       get :export
       post :convert_to_playlist
+      post :import_tracks
     end
   end
 

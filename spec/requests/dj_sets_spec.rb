@@ -133,6 +133,86 @@ RSpec.describe "DjSets", type: :request do
         expect(response.body).to include("already been taken")
       end
     end
+
+    context "with file upload (import mode)" do
+      let(:file) { fixture_file_upload(Rails.root.join("spec/fixtures/files/valid_playlist.txt"), "text/plain") }
+      let(:import_params) do
+        {
+          dj_set: {
+            file: file,
+            description: "Imported set"
+          }
+        }
+      end
+
+      it "creates a DJ set from file" do
+        expect do
+          post dj_sets_path, params: import_params
+        end.to change(DjSet, :count).by(1)
+      end
+
+      it "extracts name from filename" do
+        post dj_sets_path, params: import_params
+        expect(DjSet.last.name).to eq("valid_playlist")
+      end
+
+      it "imports tracks from file" do
+        expect do
+          post dj_sets_path, params: import_params
+        end.to change(Track, :count).by_at_least(1)
+      end
+
+      it "creates track associations" do
+        expect do
+          post dj_sets_path, params: import_params
+        end.to change(DjSetsTrack, :count).by_at_least(1)
+      end
+
+      it "redirects to the DJ set" do
+        post dj_sets_path, params: import_params
+        expect(response).to redirect_to(dj_set_path(DjSet.last))
+      end
+
+      it "displays track count in success message" do
+        post dj_sets_path, params: import_params
+        follow_redirect!
+        expect(response.body).to match(/created successfully with \d+ tracks/)
+      end
+
+      it "includes description if provided" do
+        post dj_sets_path, params: import_params
+        expect(DjSet.last.description).to eq("Imported set")
+      end
+    end
+
+    context "with invalid file upload" do
+      let(:invalid_file) { fixture_file_upload(Rails.root.join("spec/fixtures/files/invalid_playlist.txt"), "text/plain") }
+      let(:invalid_import_params) do
+        { dj_set: { file: invalid_file } }
+      end
+
+      before do
+        # Create invalid_playlist.txt fixture with wrong headers
+        FileUtils.mkdir_p(Rails.root.join("spec/fixtures/files"))
+        Rails.root.join("spec/fixtures/files/invalid_playlist.txt").write("Invalid\tHeaders\n1\t2\t3")
+      end
+
+      after do
+        FileUtils.rm_f(Rails.root.join("spec/fixtures/files/invalid_playlist.txt"))
+      end
+
+      it "does not create a DJ set" do
+        expect do
+          post dj_sets_path, params: invalid_import_params
+        end.not_to change(DjSet, :count)
+      end
+
+      it "displays an error message" do
+        post dj_sets_path, params: invalid_import_params
+        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response.body).to include("Failed to import")
+      end
+    end
   end
 
   describe "GET /dj_sets/:id/edit" do
@@ -567,6 +647,133 @@ RSpec.describe "DjSets", type: :request do
       it "keeps the original set" do
         post convert_to_playlist_dj_set_path(dj_set), params: params
         expect(DjSet.exists?(dj_set.id)).to be true
+      end
+    end
+  end
+
+  describe "POST /dj_sets/:id/import_tracks" do
+    let(:dj_set) { create(:dj_set) }
+
+    context "with valid file" do
+      let(:file) { fixture_file_upload(Rails.root.join("spec/fixtures/files/valid_playlist.txt"), "text/plain") }
+
+      it "imports tracks into existing set" do
+        expect do
+          post import_tracks_dj_set_path(dj_set), params: { file: file }
+        end.to change { dj_set.tracks.count }.by_at_least(1)
+      end
+
+      it "creates new track records" do
+        expect do
+          post import_tracks_dj_set_path(dj_set), params: { file: file }
+        end.to change(Track, :count).by_at_least(1)
+      end
+
+      it "creates DJ set track associations" do
+        expect do
+          post import_tracks_dj_set_path(dj_set), params: { file: file }
+        end.to change(DjSetsTrack, :count).by_at_least(1)
+      end
+
+      it "redirects to the DJ set" do
+        post import_tracks_dj_set_path(dj_set), params: { file: file }
+        expect(response).to redirect_to(dj_set_path(dj_set))
+      end
+
+      it "displays success message with track count" do
+        post import_tracks_dj_set_path(dj_set), params: { file: file }
+        follow_redirect!
+        expect(response.body).to match(/Successfully imported tracks/)
+      end
+    end
+
+    context "when appending to existing tracks" do
+      let(:file) { fixture_file_upload(Rails.root.join("spec/fixtures/files/valid_playlist.txt"), "text/plain") }
+      let!(:existing_track) { create(:track) }
+
+      before do
+        dj_set.dj_sets_tracks.create!(track: existing_track, order: 1)
+      end
+
+      it "appends new tracks to existing ones" do
+        initial_count = dj_set.tracks.count
+        post import_tracks_dj_set_path(dj_set), params: { file: file }
+        dj_set.reload
+        expect(dj_set.tracks.count).to be > initial_count
+      end
+
+      it "maintains existing tracks" do
+        post import_tracks_dj_set_path(dj_set), params: { file: file }
+        dj_set.reload
+        expect(dj_set.ordered_tracks.first).to eq(existing_track)
+      end
+
+      it "resequences all tracks" do
+        post import_tracks_dj_set_path(dj_set), params: { file: file }
+        dj_set.reload
+        orders = dj_set.dj_sets_tracks.order(:order).pluck(:order)
+        expect(orders).to eq((1..orders.length).to_a)
+      end
+    end
+
+    context "without file" do
+      it "displays error message" do
+        post import_tracks_dj_set_path(dj_set), params: {}
+        expect(response).to redirect_to(dj_set_path(dj_set))
+        follow_redirect!
+        expect(response.body).to include("Please select a file")
+      end
+
+      it "does not import tracks" do
+        expect do
+          post import_tracks_dj_set_path(dj_set), params: {}
+        end.not_to change(DjSetsTrack, :count)
+      end
+    end
+
+    context "with invalid file format" do
+      let(:invalid_file) { fixture_file_upload(Rails.root.join("spec/fixtures/files/invalid_playlist.txt"), "text/plain") }
+
+      before do
+        FileUtils.mkdir_p(Rails.root.join("spec/fixtures/files"))
+        Rails.root.join("spec/fixtures/files/invalid_playlist.txt").write("Invalid\tHeaders\n1\t2\t3")
+      end
+
+      after do
+        FileUtils.rm_f(Rails.root.join("spec/fixtures/files/invalid_playlist.txt"))
+      end
+
+      it "displays error message" do
+        post import_tracks_dj_set_path(dj_set), params: { file: invalid_file }
+        expect(response).to redirect_to(dj_set_path(dj_set))
+        follow_redirect!
+        expect(response.body).to include("Failed to import tracks")
+      end
+
+      it "does not import tracks" do
+        expect do
+          post import_tracks_dj_set_path(dj_set), params: { file: invalid_file }
+        end.not_to change(DjSetsTrack, :count)
+      end
+    end
+
+    context "with duplicate tracks" do
+      let(:file) { fixture_file_upload(Rails.root.join("spec/fixtures/files/valid_playlist.txt"), "text/plain") }
+
+      before do
+        # First import
+        post import_tracks_dj_set_path(dj_set), params: { file: file }
+        dj_set.reload
+      end
+
+      it "skips duplicate tracks" do
+        file2 = fixture_file_upload(Rails.root.join("spec/fixtures/files/valid_playlist.txt"), "text/plain")
+        initial_count = dj_set.tracks.count
+
+        post import_tracks_dj_set_path(dj_set), params: { file: file2 }
+        dj_set.reload
+
+        expect(dj_set.tracks.count).to eq(initial_count)
       end
     end
   end

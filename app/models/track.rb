@@ -15,9 +15,10 @@ class Track < ApplicationRecord
 
   def self.search(query)
     query = "%#{query.downcase}%"
-    left_joins(:artists, :key, :playlists).where(
-      "LOWER(tracks.name) LIKE ? OR LOWER(tracks.bpm) LIKE ? OR LOWER(artists.name) LIKE ? OR LOWER(keys.name) LIKE ? OR LOWER(playlists.name) LIKE ?",
-      query, query, query, query, query
+    left_joins(:artists, :key, :playlists, :dj_sets).where(
+      "LOWER(tracks.name) LIKE ? OR LOWER(tracks.bpm) LIKE ? OR LOWER(artists.name) LIKE ? OR " \
+      "LOWER(keys.name) LIKE ? OR LOWER(playlists.name) LIKE ? OR LOWER(dj_sets.name) LIKE ?",
+      query, query, query, query, query, query
     ).distinct
   end
 

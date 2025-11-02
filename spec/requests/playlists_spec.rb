@@ -109,31 +109,26 @@ RSpec.describe "Playlists", type: :request do
       expect(response).to redirect_to(playlists_path)
     end
 
-    it "destroys orphaned tracks" do
+    it "does not destroy tracks (tracks are permanent library)" do
       track_ids = playlist.tracks.pluck(:id)
+      initial_track_count = Track.count
       delete playlist_path(playlist)
+
+      # Tracks should remain in database
+      expect(Track.count).to eq(initial_track_count)
       track_ids.each do |track_id|
-        expect(Track.exists?(track_id)).to be false
+        expect(Track.exists?(track_id)).to be true
       end
     end
 
-    it "destroys orphaned artists" do
+    it "does not destroy artists (artists are permanent library)" do
       artist = playlist.tracks.first.artists.first
-      delete playlist_path(playlist)
-      expect(Artist.exists?(artist.id)).to be false
-    end
-
-    it "does not destroy tracks in other playlists" do
-      track = playlist.tracks.first
-      other_playlist = create(:playlist)
-      PlaylistsTrack.create!(playlist: other_playlist, track: track, order: 1)
-
-      initial_count = Track.count
+      initial_artist_count = Artist.count
       delete playlist_path(playlist)
 
-      # Only 1 track should be destroyed (the one not in other playlist)
-      expect(Track.count).to eq(initial_count - 1)
-      expect(Track.exists?(track.id)).to be true
+      # Artists should remain in database
+      expect(Artist.count).to eq(initial_artist_count)
+      expect(Artist.exists?(artist.id)).to be true
     end
   end
 

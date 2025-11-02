@@ -2,7 +2,7 @@
 
 class TracksController < ApplicationController
   def index
-    tracks = Track.includes(:artists, :key, :playlists)
+    tracks = Track.includes(:artists, :key, :playlists, :dj_sets)
 
     tracks = tracks.search(params[:search]) if params[:search].present?
 
@@ -42,6 +42,9 @@ class TracksController < ApplicationController
       when "playlists.name"
         tracks = tracks.sort_by { |track| natural_sort_key(track.playlists.map(&:name).join(", ")) }
         tracks.reverse! if direction == "desc"
+      when "dj_sets.name"
+        tracks = tracks.sort_by { |track| natural_sort_key(track.dj_sets.map(&:name).join(", ")) }
+        tracks.reverse! if direction == "desc"
       else
         tracks = tracks.order("#{column} #{direction}")
       end
@@ -54,7 +57,7 @@ class TracksController < ApplicationController
   end
 
   def show
-    @track = Track.includes(:artists, :key, :playlists).find(params[:id])
+    @track = Track.includes(:artists, :key, :playlists, :dj_sets).find(params[:id])
   end
 
   def upload_audio

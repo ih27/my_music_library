@@ -208,14 +208,18 @@ Before committing, verify:
 - Automatically resequenced after add/remove operations to maintain sequential order (1, 2, 3...)
 - Can be reordered via `dj_sets#reorder_tracks` endpoint (drag-and-drop UI)
 
-**Track** - Individual music track
+**Track** - Individual music track (permanent library)
 - Belongs to optional Key (musical key like "A Major", "C# Minor")
 - Has many playlists through `playlists_tracks`
+- Has many dj_sets through `dj_sets_tracks`
 - Has and belongs to many Artists (HABTM relationship via `artists_tracks`)
 - Uses ActiveStorage for audio file attachments
 - Fields: name, bpm (decimal), time (in seconds), album, date_added
-- Includes `search` class method for full-text search across track name, artist, key, BPM, and playlist
-  - Uses LEFT OUTER JOINs to include tracks even without associated playlists, keys, or artists
+- Includes `search` class method for full-text search across track name, artist, key, BPM, playlist, and DJ set
+  - Uses LEFT OUTER JOINs to include tracks even without associated playlists, keys, artists, or DJ sets
+- **Tracks are permanent**: Once imported, tracks remain in database even if removed from all playlists/sets
+  - This allows experimentation with different set configurations using the Set Builder feature
+  - Tracks can be reused across multiple playlists and DJ sets
 
 **PlaylistsTrack** - Join table between Playlists and Tracks
 - Stores track order within playlist via `order` column
@@ -263,8 +267,8 @@ The import system uses a class hierarchy to share common file parsing logic betw
 
 **PlaylistsController**
 - Import: Creates playlist from uploaded file, extracts name from filename
-- Show/Index: Display playlists
-- Destroy: Deletes playlist and orphaned tracks/artists (cascading cleanup)
+- Show/Index: Display playlists with harmonic analysis
+- Destroy: Deletes playlist only (tracks and artists remain in database as permanent library)
 - Reorder: Updates track order via AJAX (uses `update_column` for performance)
 
 **DjSetsController**
@@ -279,12 +283,14 @@ The import system uses a class hierarchy to share common file parsing logic betw
 - Convert to Playlist: Transforms set into a playlist, optionally deleting original
 
 **TracksController**
-- Index with search functionality (full-text across database)
+- Index with search functionality (full-text across database including DJ sets)
+- Shows both Playlists and DJ Sets columns for each track
 - Server-side harmonic compatibility filtering with optional BPM range
-- Individual track display
+- Individual track display (shows associated playlists and DJ sets)
 - Audio file upload endpoint
 - AJAX endpoint for compatible tracks (`/tracks/:id/compatible`)
 - **Set Builder Integration**: Multi-select UI with sessionStorage persistence across pagination
+- Eager loads associations (`:artists, :key, :playlists, :dj_sets`) to avoid N+1 queries
 
 **ArtistsController & KeysController**
 - Index and show views for browsing
@@ -360,10 +366,16 @@ The harmonic mixing feature helps DJs find compatible tracks and analyze playlis
 ## Important Implementation Details
 
 ### Character Encoding
-The playlist importer handles various character encodings using the `rchardet` gem (pure Ruby, no native extensions). Files are detected for encoding and converted to UTF-8 with replacement characters for invalid sequences.
+The track import system handles various character encodings using the `rchardet` gem (pure Ruby, no native extensions). Files are detected for encoding and converted to UTF-8 with replacement characters for invalid sequences.
 
-### Orphaned Record Cleanup
-When deleting a playlist, the controller checks for orphaned tracks (tracks in no playlists) and orphaned artists (artists with no tracks) and removes them to keep the database clean.
+### Permanent Library Approach
+**Tracks and artists are never automatically deleted.** Once imported, they remain in the database as a permanent library, even if removed from all playlists and DJ sets. This design decision supports:
+- **Set Builder experimentation**: Users can freely add/remove tracks from sets without losing them
+- **Track reusability**: Same track can exist in multiple playlists and DJ sets
+- **Music discovery**: Build up a searchable library over time
+- **Data preservation**: No accidental data loss when deleting playlists/sets
+
+Users can manually delete individual tracks or artists from their detail pages if truly needed.
 
 ### Duplicate Detection
 Playlists are considered duplicates if they contain the same tracks in the same order. The `unique_identifier` method on Playlist creates a signature by joining sorted track IDs.

@@ -48,6 +48,18 @@
                 <span class="text-muted">None</span>
               <% end %>
             </dd>
+
+            <dt class="col-sm-4">Sets:</dt>
+            <dd class="col-sm-8">
+              <% if @track.dj_sets.any? %>
+                <% @track.dj_sets.each do |dj_set| %>
+                  <%= link_to dj_set.name, dj_set_path(dj_set), class: 'text-decoration-none' %>
+                  <%= ',' unless dj_set == @track.dj_sets.last %>
+                <% end %>
+              <% else %>
+                <span class="text-muted">None</span>
+              <% end %>
+            </dd>
           </dl>
 
           <!-- Audio Player -->

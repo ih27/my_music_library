@@ -8,10 +8,19 @@
         <p><%= @key.tracks.count %> tracks</p>
       </div>
 
-      <div class="card-text mt-4">
-        <h5>Number of Playlists</h5>
-        <p><%= @playlists.count %> playlists</p>
-      </div>
+      <% if @playlists.any? %>
+        <div class="card-text mt-4">
+          <h5>Number of Playlists</h5>
+          <p><%= @playlists.count %> playlists</p>
+        </div>
+      <% end %>
+
+      <% if @dj_sets.any? %>
+        <div class="card-text mt-4">
+          <h5>Number of Sets</h5>
+          <p><%= @dj_sets.count %> sets</p>
+        </div>
+      <% end %>
 
       <div class="card-text mt-4">
         <h5>Tracks</h5>
@@ -35,6 +44,7 @@
             <th data-action="click->sort#sort" data-sort-column="album" class="sortable">Album <%= sort_icon('album') %></th>
             <th>Date Added</th>
             <th data-action="click->sort#sort" data-sort-column="playlists.name" class="sortable">Playlists <%= sort_icon('playlists.name') %></th>
+            <th>Sets</th>
             <th>Audio</th>
           </tr>
           </thead>
@@ -60,6 +70,12 @@
                 <% end %>
               </td>
               <td>
+                <% track.dj_sets.each do |dj_set| %>
+                  <%= link_to dj_set.name, dj_set_path(dj_set), class: 'text-decoration-none text-dark' %>
+                  <%= ',' unless dj_set == track.dj_sets.last %>
+                <% end %>
+              </td>
+              <td>
                 <% if track.audio_file.attached? %>
                   <audio controls>
                     <source src="<%= url_for(track.audio_file) %>" type="<%= track.audio_file.content_type %>">
@@ -78,25 +94,76 @@
         </div>
       </div>
 
-      <div class="row">
-        <h5>Playlists</h5>
-        <% @playlists.each do |playlist| %>
-          <div class="col-md-3 col-sm-6 mb-4">
-            <div class="card-common card-playlist text-dark position-relative">
-              <%= link_to playlist_path(playlist), class: 'card-link' do %>
-                <div class="card-header d-flex justify-content-between align-items-center p-2">
-                  <h5 class="mb-0 ml-auto"><%= playlist.name %></h5>
-                </div>
-                <% if playlist.cover_art.attached? %>
-                  <div class="card-img" style="background-image: url(<%= url_for(playlist.cover_art) %>);"></div>
-                <% else %>
-                  <div class="card-img" style="background-image: url('<%= asset_path('default_cover_art.jpg') %>');"></div>
+      <% if @playlists.any? %>
+        <div class="row">
+          <h5>Playlists</h5>
+          <% @playlists.each do |playlist| %>
+            <div class="col-md-3 col-sm-6 mb-4">
+              <div class="card-common card-playlist text-dark position-relative">
+                <%= link_to playlist_path(playlist), class: 'card-link' do %>
+                  <div class="card-header d-flex justify-content-between align-items-center p-2">
+                    <h5 class="mb-0 ml-auto"><%= playlist.name %></h5>
+                  </div>
+                  <% if playlist.cover_art.attached? %>
+                    <div class="card-img" style="background-image: url(<%= url_for(playlist.cover_art) %>);"></div>
+                  <% else %>
+                    <div class="card-img" style="background-image: url('<%= asset_path('default_cover_art.jpg') %>');"></div>
+                  <% end %>
                 <% end %>
-              <% end %>
+              </div>
             </div>
-          </div>
-        <% end %>
-      </div>
+          <% end %>
+        </div>
+      <% end %>
+
+      <% if @dj_sets.any? %>
+        <div class="row mt-4">
+          <h5>Sets</h5>
+          <% @dj_sets.each do |dj_set| %>
+            <div class="col-md-3 col-sm-6 mb-4">
+              <div class="card-common card-dj-set text-dark position-relative">
+                <div class="card-header d-flex justify-content-between align-items-center p-2">
+                  <h5 class="mb-0 ml-auto"><%= dj_set.name %></h5>
+                </div>
+                <%= link_to dj_set_path(dj_set), class: 'card-link' do %>
+                  <div class="card-body p-3 bg-light" style="min-height: 200px;">
+                    <% score = dj_set.harmonic_flow_score %>
+                    <% if dj_set.tracks.count >= 2 %>
+                      <div class="text-center mb-3">
+                        <span class="badge fs-5 <%= score >= 75 ? 'bg-success' : score >= 50 ? 'bg-warning' : 'bg-danger' %>">
+                          <%= score.round %>%
+                        </span>
+                        <div class="text-muted small">Harmonic Flow</div>
+                      </div>
+                    <% end %>
+
+                    <% if dj_set.description.present? %>
+                      <p class="text-muted small mb-2"><%= truncate(dj_set.description, length: 100) %></p>
+                    <% end %>
+
+                    <div class="small text-muted mt-auto">
+                      <div class="d-flex justify-content-between mb-1">
+                        <span><i class="bi bi-music-note"></i> <%= dj_set.tracks.count %> tracks</span>
+                      </div>
+                      <div class="d-flex justify-content-between mb-1">
+                        <span><i class="bi bi-clock"></i> <%= dj_set.total_duration_formatted %></span>
+                      </div>
+                      <% if dj_set.average_bpm > 0 %>
+                        <div class="d-flex justify-content-between mb-1">
+                          <span><i class="bi bi-speedometer"></i> <%= dj_set.average_bpm %> BPM avg</span>
+                        </div>
+                      <% end %>
+                      <div class="d-flex justify-content-between">
+                        <span><i class="bi bi-calendar"></i> <%= time_ago_in_words(dj_set.updated_at) %> ago</span>
+                      </div>
+                    </div>
+                  </div>
+                <% end %>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      <% end %>
 
     </div>
   </div>

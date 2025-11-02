@@ -9,8 +9,9 @@ class ArtistsController < ApplicationController
 
   def show
     @playlists = Playlist.joins(tracks: :artists).where(artists: { id: @artist.id }).distinct
+    @dj_sets = DjSet.joins(tracks: :artists).where(artists: { id: @artist.id }).distinct
 
-    tracks = @artist.tracks.includes(:artists, :key, :playlists)
+    tracks = @artist.tracks.includes(:artists, :key, :playlists, :dj_sets)
 
     tracks = tracks.search(params[:search]) if params[:search].present?
 

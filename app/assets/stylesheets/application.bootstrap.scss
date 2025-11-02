@@ -309,6 +309,10 @@ body {
     justify-content: space-between;
     align-items: center;
   }
+
+  .btn-group {
+    gap: 0.5rem !important;
+  }
 }
 
 /* Smooth transition for tracks container when toolbar appears */
@@ -334,4 +338,31 @@ body {
     justify-content: space-between;
     align-items: center;
   }
+
+  .btn {
+    margin-right: 0.5rem !important;
+
+    &:last-child {
+      margin-right: 0 !important;
+    }
+  }
+}
+
+/* Force rounded buttons everywhere (override Bootstrap's btn-group square corners) */
+.btn-group,
+.btn-group-vertical {
+  gap: 0.25rem !important;
+}
+
+.btn-group > .btn,
+.btn-group-vertical > .btn {
+  border-radius: 0.375rem !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+
+/* Override Bootstrap's negative margins and border adjustments for btn-group */
+.btn-group > .btn:not(:first-child),
+.btn-group > .btn-group:not(:first-child) {
+  margin-left: 0 !important;
 }

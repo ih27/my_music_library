@@ -118,56 +118,59 @@
           </a>
         </h5>
 
-        <div style="display: none;" data-optimizer-target="collapse">
-          <form action="<%= optimize_dj_set_path(@dj_set) %>" method="post" data-turbo="false">
-            <%= hidden_field_tag :authenticity_token, form_authenticity_token %>
-            <div class="row mb-3">
-              <div class="col-md-6">
-                <label class="form-label">Start With Track (Optional)</label>
-                <select name="start_track_id" class="form-select" id="start-track-select">
-                  <option value="">-- Any Track --</option>
-                  <% @dj_set.tracks_in_order.each do |track| %>
-                    <option value="<%= track.id %>"><%= track.name %> - <%= track.artists.map(&:name).join(", ") %></option>
-                  <% end %>
-                </select>
-              </div>
-
-              <div class="col-md-6">
-                <label class="form-label">End With Track (Optional)</label>
-                <select name="end_track_id" class="form-select" id="end-track-select">
-                  <option value="">-- Any Track --</option>
-                  <% @dj_set.tracks_in_order.each do |track| %>
-                    <option value="<%= track.id %>"><%= track.name %> - <%= track.artists.map(&:name).join(", ") %></option>
-                  <% end %>
-                </select>
-              </div>
+        <div style="display: none;" data-optimizer-target="collapse" data-controller="optimizer-form">
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label class="form-label">Start With Track (Optional)</label>
+              <select name="start_track_id" class="form-select" id="start-track-select" data-optimizer-form-target="startTrack">
+                <option value="">-- Any Track --</option>
+                <% @dj_set.tracks_in_order.each do |track| %>
+                  <option value="<%= track.id %>"><%= track.name %> - <%= track.artists.map(&:name).join(", ") %></option>
+                <% end %>
+              </select>
             </div>
 
-            <div class="row mb-3">
-              <div class="col-md-12">
-                <label class="form-label">
-                  Harmonic Weight: <span data-optimizer-target="harmonicWeight">70</span>%
-                  <small class="text-muted">(Energy Weight: <span data-optimizer-target="energyWeight">30</span>%)</small>
-                </label>
-                <input type="range" class="form-range" name="harmonic_weight"
-                       data-optimizer-target="slider"
-                       data-action="input->optimizer#updateWeights"
-                       min="0" max="100" value="70" step="5">
-                <small class="text-muted d-block">
-                  Higher harmonic weight prioritizes key compatibility. Higher energy weight prioritizes BPM progression.
-                </small>
-              </div>
+            <div class="col-md-6">
+              <label class="form-label">End With Track (Optional)</label>
+              <select name="end_track_id" class="form-select" id="end-track-select" data-optimizer-form-target="endTrack">
+                <option value="">-- Any Track --</option>
+                <% @dj_set.tracks_in_order.each do |track| %>
+                  <option value="<%= track.id %>"><%= track.name %> - <%= track.artists.map(&:name).join(", ") %></option>
+                <% end %>
+              </select>
             </div>
+          </div>
 
-            <div class="d-flex gap-2">
-              <button type="submit" class="btn btn-primary">Optimize Set</button>
-              <% if session[:pre_optimization_order].present? %>
-                <%= button_to "Revert to Original Order", revert_optimization_dj_set_path(@dj_set),
-                              method: :patch, class: "btn btn-secondary",
-                              data: { confirm: "Are you sure you want to revert to the original order?" } %>
-              <% end %>
+          <div class="row mb-3">
+            <div class="col-md-12">
+              <label class="form-label">
+                Harmonic Weight: <span data-optimizer-target="harmonicWeight">70</span>%
+                <small class="text-muted">(Energy Weight: <span data-optimizer-target="energyWeight">30</span>%)</small>
+              </label>
+              <input type="range" name="harmonic_weight" value="70" min="0" max="100" step="5" class="form-range"
+                     data-optimizer-target="slider" data-optimizer-form-target="harmonicWeight" data-action="input->optimizer#updateWeights">
+              <small class="text-muted d-block">
+                Higher harmonic weight prioritizes key compatibility. Higher energy weight prioritizes BPM progression.
+              </small>
             </div>
-          </form>
+          </div>
+
+          <div class="d-flex gap-2">
+            <%= button_to "Optimize Set", optimize_dj_set_path(@dj_set),
+                          method: :post, class: "btn btn-primary",
+                          data: { turbo: false },
+                          params: { 
+                            start_track_id: nil, 
+                            end_track_id: nil, 
+                            harmonic_weight: 70 
+                          },
+                          form: { data: { "optimizer-form-target": "form", action: "submit->optimizer-form#interceptSubmit" } } %>
+            <% if session[:pre_optimization_order].present? %>
+              <%= button_to "Revert to Original Order", revert_optimization_dj_set_path(@dj_set),
+                            method: :patch, class: "btn btn-secondary",
+                            data: { confirm: "Are you sure you want to revert to the original order?" } %>
+            <% end %>
+          </div>
 
           <div class="alert alert-info mt-3 mb-0">
             <small>

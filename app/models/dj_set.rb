@@ -63,6 +63,15 @@ class DjSet < ApplicationRecord
     HarmonicMixingService.analyze_playlist_transitions(self)
   end
 
+  # Get detailed harmonic analysis with penalties, bonuses, and insights
+  # Uses SetAnalysisService for Scoring System v2.0
+  #
+  # @return [Hash] Detailed analysis with :base_score, :consecutive_penalty, :variety_bonus, :final_score, :insights
+  def detailed_harmonic_analysis
+    tracks_in_order = dj_sets_tracks.includes(track: :key).order(:order).map(&:track)
+    SetAnalysisService.new(tracks_in_order).detailed_analysis
+  end
+
   # Create a duplicate of this set with a new name
   #
   # @param new_name [String] Name for the duplicated set

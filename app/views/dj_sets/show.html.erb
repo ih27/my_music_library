@@ -26,7 +26,7 @@
             <% score = @harmonic_analysis[:score] %>
             <h2 class="mb-2">
               <span class="badge fs-1 <%= score >= 75 ? 'bg-success' : score >= 50 ? 'bg-warning text-dark' : 'bg-danger' %>">
-                <%= score.round %>%
+                <%= score %>%
               </span>
             </h2>
             <small class="text-muted">Harmonic Flow Score</small>
@@ -64,14 +64,40 @@
       <div class="card-body">
         <div class="row align-items-center">
           <div class="col-md-8">
-            <h5 class="mb-3">Harmonic Flow Analysis</h5>
-            <div class="d-flex gap-3 flex-wrap">
+            <h5 class="mb-3">Harmonic Flow Analysis
+              <small class="text-muted" style="font-size: 0.7em;" title="Scoring System v2.0: Rewards smooth transitions (3 pts), energy boosts (3 pts), and variety over safe same-key mixing (2 pts)">ℹ️</small>
+            </h5>
+            <div class="d-flex gap-3 flex-wrap mb-3">
               <% quality_counts = @harmonic_analysis[:quality_counts] || {} %>
-              <span class="badge bg-success">🟢 Perfect: <%= quality_counts[:perfect] || 0 %></span>
-              <span class="badge bg-primary">🔵 Smooth: <%= quality_counts[:smooth] || 0 %></span>
-              <span class="badge bg-warning">⚡ Energy: <%= quality_counts[:energy_boost] || 0 %></span>
-              <span class="badge bg-secondary">🟡 Rough: <%= quality_counts[:rough] || 0 %></span>
+              <span class="badge bg-primary" title="Smooth transitions: ±1 key or relative major/minor (3 points each)">🔵 Smooth: <%= quality_counts[:smooth] || 0 %></span>
+              <span class="badge bg-warning" title="Energy boosts: +7 positions for building peaks (3 points each)">⚡ Energy: <%= quality_counts[:energy_boost] || 0 %></span>
+              <span class="badge bg-success" title="Perfect matches: same key, safe but less interesting (2 points each)">🟢 Perfect: <%= quality_counts[:perfect] || 0 %></span>
+              <span class="badge bg-secondary" title="Rough transitions: incompatible keys (0 points)">🟡 Rough: <%= quality_counts[:rough] || 0 %></span>
             </div>
+
+            <!-- Detailed Score Breakdown (Scoring v2.0) -->
+            <% if @detailed_analysis && @detailed_analysis[:final_score] != @detailed_analysis[:base_score] %>
+              <div class="score-details">
+                <small class="text-muted">
+                  Base: <%= @detailed_analysis[:base_score] %>
+                  <% if @detailed_analysis[:consecutive_penalty] > 0 %>
+                    | <span class="text-danger">Penalty: -<%= @detailed_analysis[:consecutive_penalty] %></span>
+                  <% end %>
+                  <% if @detailed_analysis[:variety_bonus] > 0 %>
+                    | <span class="text-success">Variety: +<%= @detailed_analysis[:variety_bonus] %></span>
+                  <% end %>
+                </small>
+              </div>
+            <% end %>
+
+            <!-- Insights -->
+            <% if @detailed_analysis && @detailed_analysis[:insights].any? %>
+              <div class="insights mt-3">
+                <% @detailed_analysis[:insights].each do |insight| %>
+                  <div class="insight-item small"><%= insight %></div>
+                <% end %>
+              </div>
+            <% end %>
           </div>
           <div class="col-md-4 text-end">
             <small class="text-muted"><%= @harmonic_analysis[:total_transitions] %> transitions analyzed</small>

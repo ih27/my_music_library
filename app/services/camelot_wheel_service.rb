@@ -117,22 +117,48 @@ class CamelotWheelService
     :rough
   end
 
-  # Calculate harmonic flow score for a playlist
+  # Scoring values for transition qualities (v2.0)
+  TRANSITION_SCORES = {
+    smooth: 3,       # Highest: shows skill + variety
+    energy_boost: 3, # Highest: intentional energy management
+    perfect: 2,      # Moderate: safe but less interesting
+    rough: 0         # Avoid these
+  }.freeze
+
+  # Get numeric score for a single transition
+  # Scoring System v2.0: Rewards DJ craft and variety
   #
-  # @param transitions [Array<Hash>] Array of transition hashes with :quality key
+  # @param from_key [String] Starting key (e.g., "8A")
+  # @param to_key [String] Destination key (e.g., "8B")
+  # @return [Integer] Score: 3 (smooth/energy), 2 (perfect), 0 (rough)
+  def self.transition_score(from_key, to_key)
+    quality = transition_quality(from_key, to_key)
+    TRANSITION_SCORES[quality] || 0
+  end
+
+  # Calculate harmonic flow score for a playlist
+  # Scoring System v2.0: Uses point system that rewards variety
+  #
+  # @param transitions [Array<Hash>] Array of transition hashes with :quality or :from_key/:to_key keys
   # @return [Float] Score from 0-100
   def self.harmonic_flow_score(transitions)
     return 100.0 if transitions.empty?
 
-    weights = {
-      perfect: 3,
-      smooth: 2,
-      energy_boost: 2,
-      rough: 0
-    }
+    # Support both old format (with :quality) and new format (with keys)
+    total_score = transitions.sum do |t|
+      if t[:quality]
+        # Old format: use quality directly from TRANSITION_SCORES
+        TRANSITION_SCORES[t[:quality]] || 0
+      elsif t[:from_key] && t[:to_key]
+        # New format: calculate score from keys
+        transition_score(t[:from_key], t[:to_key])
+      else
+        0
+      end
+    end
 
-    total_score = transitions.sum { |t| weights[t[:quality]] || 0 }
-    max_score = transitions.size * weights[:perfect]
+    # Max possible score is 3 points per transition (smooth or energy boost)
+    max_score = transitions.size * 3
 
     (total_score.to_f / max_score * 100).round(1)
   end

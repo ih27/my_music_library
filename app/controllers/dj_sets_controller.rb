@@ -16,6 +16,7 @@ class DjSetsController < ApplicationController
   def show
     @tracks = @dj_set.ordered_tracks.includes(:artists, :key)
     @harmonic_analysis = @dj_set.harmonic_analysis
+    @detailed_analysis = @dj_set.detailed_harmonic_analysis
   end
 
   # GET /dj_sets/new

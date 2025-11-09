@@ -128,43 +128,132 @@ RSpec.describe CamelotWheelService do
     end
   end
 
+  describe ".transition_score" do
+    it "returns 3 for smooth transitions" do
+      expect(described_class.transition_score("8A", "9A")).to eq(3) # Adjacent
+      expect(described_class.transition_score("8A", "7A")).to eq(3) # Adjacent
+      expect(described_class.transition_score("8A", "8B")).to eq(3) # Relative major/minor
+    end
+
+    it "returns 3 for energy boost transitions" do
+      expect(described_class.transition_score("8A", "3A")).to eq(3) # +7 positions
+    end
+
+    it "returns 2 for perfect match transitions" do
+      expect(described_class.transition_score("8A", "8A")).to eq(2) # Same key
+    end
+
+    it "returns 0 for rough transitions" do
+      expect(described_class.transition_score("8A", "2B")).to eq(0) # Incompatible
+      expect(described_class.transition_score("8A", "1A")).to eq(0) # Non-adjacent
+    end
+
+    it "handles wrapping correctly" do
+      expect(described_class.transition_score("12A", "1A")).to eq(3) # Wraps smooth
+      expect(described_class.transition_score("6A", "1A")).to eq(3) # Wraps energy (+7)
+    end
+  end
+
   describe ".harmonic_flow_score" do
-    it "returns 100 for empty transitions" do
-      expect(described_class.harmonic_flow_score([])).to eq(100.0)
-    end
+    context "with Scoring System v2.0" do
+      it "returns 100 for empty transitions" do
+        expect(described_class.harmonic_flow_score([])).to eq(100.0)
+      end
 
-    it "returns 100 for all perfect transitions" do
-      transitions = [
-        { quality: :perfect },
-        { quality: :perfect },
-        { quality: :perfect }
-      ]
-      expect(described_class.harmonic_flow_score(transitions)).to eq(100.0)
-    end
+      it "returns 100 for all smooth transitions" do
+        transitions = [
+          { quality: :smooth },    # 3 points
+          { quality: :smooth },    # 3 points
+          { quality: :smooth }     # 3 points
+        ]
+        # Total: 9 points / Max: 9 points (3 per transition) = 100%
+        expect(described_class.harmonic_flow_score(transitions)).to eq(100.0)
+      end
 
-    it "returns correct score for mixed transitions" do
-      transitions = [
-        { quality: :perfect },  # 3 points
-        { quality: :smooth },   # 2 points
-        { quality: :rough }     # 0 points
-      ]
-      # Total: 5 points / Max: 9 points = 55.6%
-      expect(described_class.harmonic_flow_score(transitions)).to eq(55.6)
-    end
+      it "returns 67% for all perfect match transitions" do
+        transitions = [
+          { quality: :perfect },   # 2 points
+          { quality: :perfect },   # 2 points
+          { quality: :perfect }    # 2 points
+        ]
+        # Total: 6 points / Max: 9 points (3 per transition) = 66.7%
+        expect(described_class.harmonic_flow_score(transitions)).to eq(66.7)
+      end
 
-    it "returns 0 for all rough transitions" do
-      transitions = [
-        { quality: :rough },
-        { quality: :rough }
-      ]
-      expect(described_class.harmonic_flow_score(transitions)).to eq(0.0)
-    end
+      it "returns correct score for mixed transitions" do
+        transitions = [
+          { quality: :smooth },       # 3 points
+          { quality: :perfect },      # 2 points
+          { quality: :energy_boost }, # 3 points
+          { quality: :rough }         # 0 points
+        ]
+        # Total: 8 points / Max: 12 points = 66.7%
+        expect(described_class.harmonic_flow_score(transitions)).to eq(66.7)
+      end
 
-    it "gives equal weight to smooth and energy_boost" do
-      smooth_transitions = [{ quality: :smooth }]
-      energy_transitions = [{ quality: :energy_boost }]
-      expect(described_class.harmonic_flow_score(smooth_transitions))
-        .to eq(described_class.harmonic_flow_score(energy_transitions))
+      it "returns 0 for all rough transitions" do
+        transitions = [
+          { quality: :rough },
+          { quality: :rough }
+        ]
+        expect(described_class.harmonic_flow_score(transitions)).to eq(0.0)
+      end
+
+      it "smooth and energy_boost have equal weight (3 points each)" do
+        smooth_transitions = [{ quality: :smooth }]
+        energy_transitions = [{ quality: :energy_boost }]
+        expect(described_class.harmonic_flow_score(smooth_transitions))
+          .to eq(described_class.harmonic_flow_score(energy_transitions))
+        expect(described_class.harmonic_flow_score(smooth_transitions)).to eq(100.0)
+      end
+
+      it "perfect transitions score lower than smooth (2 vs 3 points)" do
+        smooth_transitions = [{ quality: :smooth }]
+        perfect_transitions = [{ quality: :perfect }]
+        expect(described_class.harmonic_flow_score(perfect_transitions))
+          .to be < described_class.harmonic_flow_score(smooth_transitions)
+      end
+
+      it "supports new format with :from_key and :to_key" do
+        transitions = [
+          { from_key: "8A", to_key: "9A" },  # Smooth = 3
+          { from_key: "9A", to_key: "9B" },  # Smooth = 3
+          { from_key: "9B", to_key: "4B" }   # Energy = 3
+        ]
+        # Total: 9 points / Max: 9 points = 100%
+        expect(described_class.harmonic_flow_score(transitions)).to eq(100.0)
+      end
+
+      # Test scoring examples from the spec
+      it "boring same-key set scores 67% (not 100%)" do
+        transitions = [
+          { quality: :perfect },
+          { quality: :perfect },
+          { quality: :perfect }
+        ]
+        # 6 out of 9 possible = 67%
+        expect(described_class.harmonic_flow_score(transitions)).to eq(66.7)
+      end
+
+      it "skilled variety set scores 100%" do
+        transitions = [
+          { from_key: "8A", to_key: "9A" },  # Smooth +1
+          { from_key: "9A", to_key: "9B" },  # Smooth relative major/minor
+          { from_key: "9B", to_key: "4B" }   # Energy boost +7
+        ]
+        expect(described_class.harmonic_flow_score(transitions)).to eq(100.0)
+      end
+
+      it "mixed quality set with one rough transition" do
+        transitions = [
+          { from_key: "8A", to_key: "9A" },  # Smooth = 3
+          { from_key: "9A", to_key: "9A" },  # Perfect = 2
+          { from_key: "9A", to_key: "5B" },  # Rough = 0
+          { from_key: "5B", to_key: "6B" }   # Smooth = 3
+        ]
+        # Total: 8 points / Max: 12 points = 66.7%
+        expect(described_class.harmonic_flow_score(transitions)).to eq(66.7)
+      end
     end
   end
 

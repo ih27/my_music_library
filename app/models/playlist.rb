@@ -36,6 +36,22 @@ class Playlist < ApplicationRecord
     HarmonicMixingService.analyze_playlist_transitions(self)
   end
 
+  # Get detailed harmonic analysis with penalties, bonuses, and insights
+  # Uses SetAnalysisService for Scoring System v2.0
+  #
+  # @return [Hash] Detailed analysis with :base_score, :consecutive_penalty, :variety_bonus, :final_score, :insights
+  def detailed_harmonic_analysis
+    tracks_in_order = playlists_tracks.includes(track: :key).order(:order).map(&:track)
+    SetAnalysisService.new(tracks_in_order).detailed_analysis
+  end
+
+  # Get ordered tracks for this playlist
+  #
+  # @return [Array<Track>] Tracks in playlist order
+  def tracks_in_order
+    playlists_tracks.includes(:track).order(:order).map(&:track)
+  end
+
   private
 
   def attach_default_cover_art

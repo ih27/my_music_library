@@ -9,6 +9,7 @@ class PlaylistsController < ApplicationController
 
   def show
     @harmonic_analysis = @playlist.harmonic_analysis
+    @detailed_analysis = @playlist.detailed_harmonic_analysis
   end
 
   def new

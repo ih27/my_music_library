@@ -13,8 +13,9 @@
               <div class="card-img position-relative" style="background-image: url(<%= url_for(playlist.cover_art) %>);">
                 <% score = playlist.harmonic_flow_score %>
                 <% if score > 0 %>
-                  <span class="badge position-absolute top-0 start-50 translate-middle-x mt-2 <%= score >= 75 ? 'bg-success' : score >= 50 ? 'bg-warning' : 'bg-danger' %>">
-                    <%= score.round %>%
+                  <span class="badge position-absolute top-0 start-50 translate-middle-x mt-2 <%= score >= 75 ? 'bg-success' : score >= 50 ? 'bg-warning' : 'bg-danger' %>"
+                        title="Harmonic Flow Score (v2.0): <%= score %>% - Rewards variety and DJ craft">
+                    <%= score %>%
                   </span>
                 <% end %>
               </div>
@@ -22,8 +23,9 @@
               <div class="card-img position-relative" style="background-image: url('<%= asset_path('default_cover_art.jpg') %>');">
                 <% score = playlist.harmonic_flow_score %>
                 <% if score > 0 %>
-                  <span class="badge position-absolute top-0 start-50 translate-middle-x mt-2 <%= score >= 75 ? 'bg-success' : score >= 50 ? 'bg-warning' : 'bg-danger' %>">
-                    <%= score.round %>%
+                  <span class="badge position-absolute top-0 start-50 translate-middle-x mt-2 <%= score >= 75 ? 'bg-success' : score >= 50 ? 'bg-warning' : 'bg-danger' %>"
+                        title="Harmonic Flow Score (v2.0): <%= score %>% - Rewards variety and DJ craft">
+                    <%= score %>%
                   </span>
                 <% end %>
               </div>

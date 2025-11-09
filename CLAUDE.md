@@ -172,11 +172,41 @@ git commit -m "test: add comprehensive specs for compatibility filtering"
 git commit -m "docs: document retrospective usage workflow in CLAUDE.md"
 ```
 
-### 5. Code Review Checklist
+### 5. Code Quality Guidelines
+
+**IMPORTANT: Never disable RuboCop cops unless absolutely necessary**
+
+When RuboCop reports an offense:
+1. **First, fix the underlying issue** - Refactor code to comply with the cop
+2. **Consider if the cop is correct** - RuboCop usually catches real code quality issues
+3. **Only disable as a last resort** - If there's truly no other solution, document why
+
+Common patterns to use instead of disabling cops:
+- **Instead of case with duplicate branches** → Use hash lookup with constants
+- **Instead of complex conditionals** → Extract methods or use guard clauses
+- **Instead of long methods** → Break into smaller, focused methods
+
+Example:
+```ruby
+# ❌ Bad: Disabling cops
+# rubocop:disable Style/HashLikeCase
+case quality
+when :smooth then 3
+when :energy_boost then 3
+when :perfect then 2
+end
+# rubocop:enable Style/HashLikeCase
+
+# ✅ Good: Fix the issue with constants
+SCORES = { smooth: 3, energy_boost: 3, perfect: 2 }.freeze
+SCORES[quality]
+```
+
+### 6. Code Review Checklist
 Before committing, verify:
 - [ ] Feature/fix works as expected
 - [ ] Tests added and passing (bin/ci ✅)
-- [ ] RuboCop compliant
+- [ ] RuboCop compliant (no cops disabled unnecessarily)
 - [ ] Documentation updated (CLAUDE.md, specs, comments)
 - [ ] No security vulnerabilities
 - [ ] Conventional commit message prepared
@@ -300,6 +330,15 @@ The import system uses a class hierarchy to share common file parsing logic betw
 **Overview**
 The harmonic mixing feature helps DJs find compatible tracks and analyze playlist transitions using Camelot Wheel notation. All tracks have keys stored in Camelot format (e.g., "8A", "12B").
 
+**Scoring System v2.0** (Updated: 2025-11-09)
+The scoring system rewards **DJ craft quality** and **musical variety** over simple key matching:
+- **Smooth transitions** (±1 position or relative major/minor): **3 points** - Shows skill + variety
+- **Energy boosts** (+7 positions): **3 points** - Intentional energy management for peaks
+- **Perfect matches** (same key): **2 points** - Safe but musically less interesting
+- **Rough transitions** (incompatible): **0 points** - Should be avoided
+
+This encourages DJs to create dynamic, engaging sets rather than boring same-key sequences.
+
 **CamelotWheelService** (`app/services/camelot_wheel_service.rb`)
 - Parses Camelot notation: Format `[1-12][A|B]` where number = wheel position, letter = mode (A=Minor, B=Major)
 - Calculates compatible keys based on harmonic mixing rules:
@@ -307,8 +346,19 @@ The harmonic mixing feature helps DJs find compatible tracks and analyze playlis
   - **Smooth**: ±1 position (8A → 7A, 9A) or relative major/minor (8A ↔ 8B)
   - **Energy Boost**: +7 positions forward (8A → 3A)
   - **Rough**: All other transitions
-- Computes harmonic flow score (0-100%) for playlists
-- Formula: `(Perfect × 3 + Smooth × 2 + Energy × 2 + Rough × 0) / (total_transitions × 3) × 100`
+- `transition_score(from_key, to_key)` - Returns numeric score for a single transition (0-3 points)
+- `harmonic_flow_score(transitions)` - Computes overall score (0-100%) for playlists/sets
+- **Formula v2.0**: `(Smooth × 3 + Energy × 3 + Perfect × 2 + Rough × 0) / (total_transitions × 3) × 100`
+
+**SetAnalysisService** (`app/services/set_analysis_service.rb`)
+- Provides detailed harmonic analysis with penalties and bonuses
+- **Consecutive Penalty**: Penalizes 3+ consecutive same-key transitions (max -30 points)
+  - Formula: `(consecutive_count - 2) × 5` points per run
+- **Variety Bonus**: Rewards using diverse transition types
+  - 3-4 different types: +10 points
+  - 2 types: +5 points
+- Generates insights and recommendations for improving set flow
+- Methods: `score`, `detailed_analysis`, `generate_insights`, `transition_breakdown`
 
 **HarmonicMixingService** (`app/services/harmonic_mixing_service.rb`)
 - Finds compatible tracks for a given track with optional BPM range filtering
@@ -321,11 +371,14 @@ The harmonic mixing feature helps DJs find compatible tracks and analyze playlis
 - `Track#find_compatible(bpm_range:)` - Finds compatible tracks with optional BPM filter
 - `Track#compatible_with?(other_track, bpm_range:)` - Boolean compatibility check
 - `Playlist#analyze_transitions` - Returns array of transition objects
-- `Playlist#harmonic_flow_score` - Returns 0-100 score
+- `Playlist#harmonic_flow_score` - Returns 0-100 score (uses v2.0 scoring)
 - `Playlist#harmonic_analysis` - Full analysis with stats
+- `Playlist#detailed_harmonic_analysis` - **v2.0**: Detailed analysis with penalties, bonuses, and insights
+- `Playlist#tracks_in_order` - Returns ordered tracks array
 - `DjSet#analyze_transitions` - Same as Playlist
-- `DjSet#harmonic_flow_score` - Same as Playlist
-- `DjSet#harmonic_analysis` - Same as Playlist
+- `DjSet#harmonic_flow_score` - Returns 0-100 score (uses v2.0 scoring)
+- `DjSet#harmonic_analysis` - Full analysis with stats
+- `DjSet#detailed_harmonic_analysis` - **v2.0**: Detailed analysis with penalties, bonuses, and insights
 - `DjSet#duplicate(new_name:)` - Creates copy of set
 - `DjSet#export_to_file` - Exports as tab-delimited text
 - `DjSet#convert_to_playlist(name:, cover_art:, description:)` - Converts to Playlist

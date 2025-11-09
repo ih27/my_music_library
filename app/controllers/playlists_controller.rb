@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class PlaylistsController < ApplicationController
-  before_action :set_playlist, only: %i[show destroy reorder_tracks]
+  before_action :set_playlist, only: %i[show destroy reorder_tracks convert_to_dj_set]
 
   def index
     @playlists = Playlist.all
@@ -75,6 +75,14 @@ class PlaylistsController < ApplicationController
     render json: { error: e.message }, status: :unprocessable_entity
   rescue ActiveRecord::RecordNotFound => e
     render json: { error: e.message }, status: :not_found
+  end
+
+  # POST /playlists/:id/convert_to_dj_set
+  def convert_to_dj_set
+    dj_set = @playlist.convert_to_dj_set(name: params[:name])
+    redirect_to dj_set, notice: "Converted to DJ Set: #{dj_set.name}"
+  rescue StandardError => e
+    redirect_to @playlist, alert: "Error converting: #{e.message}"
   end
 
   private

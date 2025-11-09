@@ -102,4 +102,83 @@ RSpec.describe Playlist, type: :model do
       expect(quality_counts.keys).to all(be_in(%i[perfect smooth energy_boost rough]))
     end
   end
+
+  describe "#convert_to_dj_set" do
+    let(:playlist) { create(:playlist, :with_tracks, name: "Summer Vibes 2024", tracks_count: 5) }
+
+    it "creates a new DJ Set" do
+      expect { playlist.convert_to_dj_set }.to change(DjSet, :count).by(1)
+    end
+
+    it "uses default name with (DJ Set) suffix" do
+      dj_set = playlist.convert_to_dj_set
+      expect(dj_set.name).to eq("Summer Vibes 2024 (DJ Set)")
+    end
+
+    it "accepts custom name" do
+      dj_set = playlist.convert_to_dj_set(name: "Custom Set Name")
+      expect(dj_set.name).to eq("Custom Set Name")
+    end
+
+    it "sets description noting the source playlist" do
+      dj_set = playlist.convert_to_dj_set
+      expect(dj_set.description).to include("Converted from playlist: Summer Vibes 2024")
+    end
+
+    it "copies all tracks in exact order" do
+      dj_set = playlist.convert_to_dj_set
+      expect(dj_set.tracks.count).to eq(playlist.tracks.count)
+
+      playlist.playlists_tracks.order(:order).each_with_index do |pt, index|
+        dj_set_track = dj_set.dj_sets_tracks.order(:order)[index]
+        expect(dj_set_track.track).to eq(pt.track)
+        expect(dj_set_track.order).to eq(pt.order)
+      end
+    end
+
+    it "does not delete the original playlist" do
+      playlist # Force creation
+      expect { playlist.convert_to_dj_set }.not_to change(described_class, :count)
+      expect(described_class.exists?(playlist.id)).to be true
+    end
+
+    it "does not modify the original playlist tracks" do
+      original_track_count = playlist.tracks.count
+      original_track_ids = playlist.tracks.order(:id).pluck(:id)
+
+      playlist.convert_to_dj_set
+
+      expect(playlist.reload.tracks.count).to eq(original_track_count)
+      expect(playlist.tracks.order(:id).pluck(:id)).to eq(original_track_ids)
+    end
+
+    it "returns the created DJ Set" do
+      dj_set = playlist.convert_to_dj_set
+      expect(dj_set).to be_a(DjSet)
+      expect(dj_set).to be_persisted
+    end
+
+    context "with empty playlist" do
+      let(:empty_playlist) { create(:playlist, name: "Empty Playlist") }
+
+      it "creates DJ Set with no tracks" do
+        dj_set = empty_playlist.convert_to_dj_set
+        expect(dj_set.tracks.count).to eq(0)
+      end
+    end
+
+    context "with duplicate name" do
+      before do
+        create(:dj_set, name: "Summer Vibes 2024 (DJ Set)")
+      end
+
+      it "raises validation error" do
+        expect { playlist.convert_to_dj_set }.to raise_error(ActiveRecord::RecordInvalid, /Name has already been taken/)
+      end
+
+      it "allows conversion with custom name" do
+        expect { playlist.convert_to_dj_set(name: "Summer Vibes 2024 v2") }.not_to raise_error
+      end
+    end
+  end
 end

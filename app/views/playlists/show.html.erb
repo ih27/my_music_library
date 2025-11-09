@@ -71,6 +71,29 @@
     </div>
   <% end %>
 
+  <!-- Convert to DJ Set Section -->
+  <div class="card mb-4">
+    <div class="card-body">
+      <h5 class="mb-3">🎛️ Convert to DJ Set</h5>
+      <p class="text-muted small mb-3">
+        Convert this playlist to an editable DJ Set for optimization experiments.
+        The original playlist will be preserved as a historical record.
+      </p>
+      <%= form_with url: convert_to_dj_set_playlist_path(@playlist), method: :post, class: "row g-3" do |f| %>
+        <div class="col-md-8">
+          <%= f.text_field :name,
+              value: "#{@playlist.name} (DJ Set)",
+              class: "form-control",
+              placeholder: "DJ Set Name (optional)" %>
+          <small class="form-text text-muted">Leave blank to use default name</small>
+        </div>
+        <div class="col-md-4">
+          <%= f.submit "Convert to DJ Set", class: "btn btn-primary w-100" %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
   <!-- Second Section: Tracks Table -->
   <h2 class="text-center">Tracks</h2>
   <table id="tracks-table" class="table table-striped table-hover"

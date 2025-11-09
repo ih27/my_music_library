@@ -52,6 +52,31 @@ class Playlist < ApplicationRecord
     playlists_tracks.includes(:track).order(:order).map(&:track)
   end
 
+  # Convert this playlist to a DJ Set
+  # Playlists are read-only historical records, so this creates a new editable DJ Set
+  # for optimization experiments without deleting the original playlist.
+  #
+  # @param name [String, nil] Optional custom name for the DJ Set
+  # @return [DjSet] Newly created DJ Set with copied tracks
+  def convert_to_dj_set(name: nil)
+    dj_set_name = name.presence || "#{self.name} (DJ Set)"
+
+    dj_set = DjSet.create!(
+      name: dj_set_name,
+      description: "Converted from playlist: #{self.name}"
+    )
+
+    # Copy tracks in exact order
+    playlists_tracks.order(:order).each do |pt|
+      dj_set.dj_sets_tracks.create!(
+        track: pt.track,
+        order: pt.order
+      )
+    end
+
+    dj_set
+  end
+
   private
 
   def attach_default_cover_art

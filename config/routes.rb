@@ -13,6 +13,7 @@ Rails.application.routes.draw do
   resources :playlists, only: %i[new create show index destroy] do
     member do
       patch "reorder_tracks", to: "playlists#reorder_tracks", as: :reorder_tracks
+      post :convert_to_dj_set
     end
   end
 

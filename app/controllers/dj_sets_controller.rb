@@ -200,18 +200,30 @@ class DjSetsController < ApplicationController
 
   # POST /dj_sets/:id/optimize
   def optimize
-    # Store current order in session (for revert)
-    session[:pre_optimization_order] = @dj_set.dj_sets_tracks
-                                              .order(:order)
-                                              .pluck(:track_id)
-
     options = optimization_params
     @result = @dj_set.optimize_order!(options)
 
-    redirect_to dj_set_path(@dj_set),
-                notice: "Set optimized! Score: #{@result[:old_score].round(1)} → " \
-                        "#{@result[:new_score].round(1)} (+#{@result[:score_improvement]}%) " \
-                        "using #{@result[:method].humanize} in #{@result[:computation_time]}s"
+    # Only apply optimization if score improved or stayed the same
+    if @result[:new_score] >= @result[:old_score]
+      # Store current order in session (for revert)
+      session[:pre_optimization_order] = @result[:old_order]
+      session[:optimized_dj_set_id] = @dj_set.id
+
+      redirect_to dj_set_path(@dj_set),
+                  notice: "Set optimized! Score: #{@result[:old_score].round(1)} → " \
+                          "#{@result[:new_score].round(1)} (+#{@result[:score_improvement]}%) " \
+                          "using #{@result[:method].humanize} in #{@result[:computation_time]}s"
+    else
+      # Revert to original order
+      @result[:old_order].each_with_index do |track_id, index|
+        dj_set_track = @dj_set.dj_sets_tracks.find_by(track_id: track_id)
+        dj_set_track&.update_column(:order, index + 1)
+      end
+
+      redirect_to dj_set_path(@dj_set),
+                  alert: "Optimization did not improve score (#{@result[:old_score].round(1)} → " \
+                         "#{@result[:new_score].round(1)}). Order unchanged."
+    end
   rescue StandardError => e
     redirect_to dj_set_path(@dj_set), alert: "Optimization failed: #{e.message}"
   end

@@ -43,9 +43,13 @@ class PlaylistOptimizerService
     # Preload keys to avoid N+1 queries during optimization
     ActiveRecord::Associations::Preloader.new(records: tracks, associations: :key).call
 
+    # Store original order for potential revert
+    @result = { old_order: tracks.map(&:id) }
+
     start_time = Time.current
 
-    @result = optimize_order(tracks, options)
+    optimization_result = optimize_order(tracks, options)
+    @result.merge!(optimization_result)
     @result[:computation_time] = (Time.current - start_time).round(2)
     @result[:old_score] = current_score(tracks)
     @result[:new_score] = @result[:score]

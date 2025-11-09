@@ -272,7 +272,9 @@ class DjSetsController < ApplicationController
       :start_track_id,
       :end_track_id,
       :harmonic_weight,
-      :energy_weight
+      :energy_weight,
+      :authenticity_token,
+      :id
     ).to_h.symbolize_keys
 
     # Convert track IDs to Track objects

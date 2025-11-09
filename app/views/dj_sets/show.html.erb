@@ -119,7 +119,8 @@
         </h5>
 
         <div style="display: none;" data-optimizer-target="collapse">
-          <%= form_with url: optimize_dj_set_path(@dj_set), method: :post, local: true do |f| %>
+          <form action="<%= optimize_dj_set_path(@dj_set) %>" method="post" data-turbo="false">
+            <%= hidden_field_tag :authenticity_token, form_authenticity_token %>
             <div class="row mb-3">
               <div class="col-md-6">
                 <label class="form-label">Start With Track (Optional)</label>
@@ -159,14 +160,14 @@
             </div>
 
             <div class="d-flex gap-2">
-              <%= f.submit "Optimize Set", class: "btn btn-primary" %>
+              <button type="submit" class="btn btn-primary">Optimize Set</button>
               <% if session[:pre_optimization_order].present? %>
                 <%= button_to "Revert to Original Order", revert_optimization_dj_set_path(@dj_set),
                               method: :patch, class: "btn btn-secondary",
                               data: { confirm: "Are you sure you want to revert to the original order?" } %>
               <% end %>
             </div>
-          <% end %>
+          </form>
 
           <div class="alert alert-info mt-3 mb-0">
             <small>

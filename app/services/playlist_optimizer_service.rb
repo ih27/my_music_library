@@ -39,6 +39,10 @@ class PlaylistOptimizerService
     validate!
 
     tracks = set_or_playlist.tracks_in_order
+
+    # Preload keys to avoid N+1 queries during optimization
+    ActiveRecord::Associations::Preloader.new(records: tracks, associations: :key).call
+
     start_time = Time.current
 
     @result = optimize_order(tracks, options)
@@ -170,18 +174,23 @@ class PlaylistOptimizerService
   def energy_arc_score(ordered_tracks)
     return 100 if ordered_tracks.count < 3 # Too short to judge
 
-    # Get actual energy values
-    actual_energies = ordered_tracks.map { |t| estimate_track_energy(t) }
-
-    # Get ideal curve for this playlist length
-    ideal_energies = ideal_energy_curve(ordered_tracks.count)
-
-    # Calculate Mean Squared Error (lower = better match)
-    squared_errors = actual_energies.zip(ideal_energies).map do |actual, ideal|
-      (actual - ideal)**2
+    # Cache energy values per track to avoid recalculation
+    @energy_cache ||= {}
+    actual_energies = ordered_tracks.map do |t|
+      @energy_cache[t.id] ||= estimate_track_energy(t)
     end
 
-    mse = squared_errors.sum / actual_energies.count.to_f
+    # Cache ideal curve per track count
+    @ideal_curve_cache ||= {}
+    ideal_energies = @ideal_curve_cache[ordered_tracks.count] ||= ideal_energy_curve(ordered_tracks.count)
+
+    # Calculate Mean Squared Error (lower = better match)
+    mse = 0
+    actual_energies.each_with_index do |actual, i|
+      diff = actual - ideal_energies[i]
+      mse += diff * diff
+    end
+    mse /= actual_energies.count.to_f
 
     # Convert MSE to 0-100 score (inverse relationship)
     # Max possible MSE = 10,000 (100 points difference squared)
@@ -200,14 +209,48 @@ class PlaylistOptimizerService
     harmonic_weight = opts[:harmonic_weight] || 0.7
     energy_weight = opts[:energy_weight] || 0.3
 
-    # Score 1: Harmonic transitions (using SetAnalysisService v2.0)
-    harmonic_score = SetAnalysisService.new(ordered_tracks).score
+    # Score 1: Harmonic transitions (fast path for optimization)
+    harmonic_score = fast_harmonic_score(ordered_tracks)
 
     # Score 2: How well does energy follow ideal curve?
     energy_score = energy_arc_score(ordered_tracks)
 
     # Weighted combination
     (harmonic_score * harmonic_weight) + (energy_score * energy_weight)
+  end
+
+  # Fast harmonic scoring without full SetAnalysisService overhead
+  # Used during optimization loops where we score millions of permutations
+  #
+  # @param ordered_tracks [Array<Track>] Tracks in order
+  # @return [Float] Harmonic score 0-100
+  def fast_harmonic_score(ordered_tracks)
+    return 100.0 if ordered_tracks.count < 2
+
+    # Pre-cache key names to avoid repeated AR queries
+    @key_cache ||= {}
+    tracks_with_keys = ordered_tracks.select do |t|
+      t.key_id.present?
+    end
+
+    return 0.0 if tracks_with_keys.count < 2
+
+    # Build transitions and calculate score directly
+    total_score = 0
+    transition_count = 0
+
+    tracks_with_keys.each_cons(2) do |from_track, to_track|
+      from_key = @key_cache[from_track.key_id] ||= from_track.key.name
+      to_key = @key_cache[to_track.key_id] ||= to_track.key.name
+
+      total_score += CamelotWheelService.transition_score(from_key, to_key)
+      transition_count += 1
+    end
+
+    return 0.0 if transition_count.zero?
+
+    # Return average score (0-100)
+    (total_score / transition_count.to_f).clamp(0, 100)
   end
 
   # Score a single transition between tracks
@@ -271,13 +314,25 @@ class PlaylistOptimizerService
     best_order = nil
     best_score = -Float::INFINITY
 
+    # Reuse array to avoid allocations
+    full_order = []
+    full_order << start_track if start_track
+
     candidates.permutation.each do |order|
-      full_order = build_full_order(order, start_track, end_track)
+      # Reuse full_order array - just replace middle section
+      if start_track
+        full_order[1, order.size] = order
+        full_order[order.size + 1] = end_track if end_track
+      else
+        full_order[0, order.size] = order
+        full_order[order.size] = end_track if end_track
+      end
+
       score = score_arrangement(full_order, opts)
 
       if score > best_score
         best_score = score
-        best_order = full_order
+        best_order = full_order.dup # Only dup when we find a better solution
       end
     end
 
@@ -316,11 +371,11 @@ class PlaylistOptimizerService
       generation_best = scored_population.max_by { |i| i[:score] }
       best_ever = generation_best if generation_best[:score] > best_ever[:score]
 
-      # Selection: Keep top 20%
+      # Selection: Keep top 20% using partial_sort for efficiency
       elite_size = (population_size * 0.2).to_i
-      elite = scored_population.sort_by { |i| -i[:score] }.first(elite_size)
+      elite = scored_population.max(elite_size) { |a, b| a[:score] <=> b[:score] }
 
-      # Reproduction: Generate new population
+      # Reproduction: Generate new population (reuse elite orders)
       new_population = elite.map { |i| i[:order] }
 
       while new_population.size < population_size
@@ -368,11 +423,17 @@ class PlaylistOptimizerService
     child = Array.new(size)
     (start_idx..end_idx).each { |i| child[i] = p1_genes[i] }
 
-    # Fill remaining positions with parent2 genes in order
-    p2_genes.each do |gene|
-      next if child.include?(gene)
+    # Use Set for O(1) lookup instead of O(n) array.include?
+    used = Set.new(child.compact)
 
-      child[child.index(nil)] = gene
+    # Fill remaining positions with parent2 genes in order
+    fill_idx = 0
+    p2_genes.each do |gene|
+      next if used.include?(gene)
+
+      # Find next nil position
+      fill_idx += 1 while child[fill_idx]
+      child[fill_idx] = gene
     end
 
     build_full_order(child, start_track, end_track)
@@ -407,7 +468,7 @@ class PlaylistOptimizerService
     lookahead = opts[:lookahead] || 3
 
     ordered = start_track ? [start_track] : []
-    remaining = tracks - ordered - [end_track].compact
+    remaining = (tracks - ordered - [end_track].compact).to_set
 
     while remaining.any?
       current = ordered.last || tracks.first
@@ -422,7 +483,8 @@ class PlaylistOptimizerService
         # Look ahead: what opportunities does this create?
         future_score = estimate_future_potential(
           candidate,
-          remaining - [candidate],
+          remaining,
+          candidate,
           lookahead - 1,
           opts
         )
@@ -448,12 +510,24 @@ class PlaylistOptimizerService
     }
   end
 
-  def estimate_future_potential(track, remaining, depth, opts)
-    return 0 if depth.zero? || remaining.empty?
+  def estimate_future_potential(track, remaining_set, exclude_track, depth, opts)
+    return 0 if depth.zero? || remaining_set.size <= 1
 
     # Quick heuristic: average of best few transitions from here
-    scores = remaining.map { |t| score_transition(track, t, opts) }
-    scores.max(3).sum / 3.0
+    # Avoid allocating array - just track top 3 scores
+    top_scores = []
+    remaining_set.each do |t|
+      next if t == exclude_track
+
+      score = score_transition(track, t, opts)
+      top_scores << score
+      top_scores.sort!.reverse!
+      top_scores.pop if top_scores.size > 3
+    end
+
+    return 0 if top_scores.empty?
+
+    top_scores.sum / top_scores.size.to_f
   end
 end
 # rubocop:enable Metrics/ClassLength

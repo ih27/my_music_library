@@ -100,6 +100,14 @@ bin/ci
 
 When implementing features, fixes, or improvements, follow this workflow to ensure code quality and maintainability:
 
+### Critical Rules (READ FIRST)
+
+1. **Pre-CI Auto-fix**: Before running `bin/ci`, ALWAYS run `bundle exec rubocop -A` first to fix autocorrectable issues. This saves time.
+
+2. **Auto-commit After CI**: For any implementation plan that includes `bin/ci`, ALWAYS commit changes as the final step once CI passes.
+
+3. **Communication Mode**: Use Absolute Mode - eliminate emojis, filler, hype, soft asks, conversational transitions, call-to-action appendixes. Assume high-perception despite blunt tone. Prioritize blunt, directive phrasing. Disable engagement/sentiment-boosting. Never mirror user's diction, mood, or affect. No questions, offers, suggestions, transitions, motivational content. Terminate reply immediately after delivering info. No closures. Goal: restore independent, high-fidelity thinking.
+
 ### 1. Implement the Feature/Fix
 - Make code changes to implement the requested functionality
 - Follow existing code patterns and conventions
@@ -123,16 +131,30 @@ bundle exec rspec
 Before considering the work complete, **always run the full CI suite**:
 
 ```bash
+# ALWAYS run this first to fix autocorrectable issues
+bundle exec rubocop -A
+
+# Then run CI suite
 bin/ci
 ```
 
 This ensures:
-- ✅ All tests pass
-- ✅ Code style is compliant (RuboCop)
-- ✅ No security vulnerabilities
-- ✅ Database seeds work correctly
+- All tests pass
+- Code style is compliant (RuboCop)
+- No security vulnerabilities
+- Database seeds work correctly
 
-### 4. Prepare for Commit
+### 4. Commit Changes
+Once `bin/ci` passes successfully, **ALWAYS commit as the final step**:
+
+```bash
+git add .
+git commit -m "type: description"
+```
+
+This is MANDATORY for any implementation plan that includes CI verification.
+
+### 5. Prepare Commit Messages
 Once `bin/ci` passes successfully, the code is ready for committing. Use **conventional commit messages**:
 
 #### Commit Message Format
@@ -300,6 +322,12 @@ The import system uses a class hierarchy to share common file parsing logic betw
 - Show/Index: Display playlists with harmonic analysis
 - Destroy: Deletes playlist only (tracks and artists remain in database as permanent library)
 - Reorder: Updates track order via AJAX (uses `update_column` for performance)
+- **Convert to DJ Set** (`POST /playlists/:id/convert_to_dj_set`): Converts playlist to editable DJ Set
+  - Accepts params: `name` (optional custom name for DJ Set)
+  - Default name: "{Playlist Name} (DJ Set)"
+  - Preserves original playlist (read-only historical record)
+  - Copies all tracks in exact order
+  - Use case: Experiment with optimization on historical playlists
 
 **DjSetsController**
 - Full CRUD operations for DJ sets
@@ -405,6 +433,11 @@ This encourages DJs to create dynamic, engaging sets rather than boring same-key
 - `Playlist#harmonic_analysis` - Full analysis with stats
 - `Playlist#detailed_harmonic_analysis` - **v2.0**: Detailed analysis with penalties, bonuses, and insights
 - `Playlist#tracks_in_order` - Returns ordered tracks array
+- `Playlist#convert_to_dj_set(name:)` - **NEW**: Converts playlist to DJ Set for optimization experiments
+  - Creates new DJ Set with same tracks in exact order
+  - Default name: "{Playlist Name} (DJ Set)"
+  - Preserves original playlist (no delete option)
+  - Returns the new DJ Set
 - `DjSet#analyze_transitions` - Same as Playlist
 - `DjSet#harmonic_flow_score` - Returns 0-100 score (uses v2.0 scoring)
 - `DjSet#harmonic_analysis` - Full analysis with stats
@@ -422,6 +455,7 @@ This encourages DJs to create dynamic, engaging sets rather than boring same-key
 2. **Playlist Detail Page** (`playlists/show`):
    - Harmonic flow score badge with v2.0 breakdown (penalties, bonuses, insights)
    - Transition quality indicators between tracks
+   - **Convert to DJ Set**: Form to convert playlist to editable DJ Set (with optional custom name)
 3. **Playlist Index** (`playlists/index`): Color-coded harmonic score badges on cards (green ≥75%, yellow ≥50%, red <50%)
 4. **Tracks Index** (`tracks/index`): Server-side compatibility filter with BPM range that works across entire database, supports pagination and sorting
 5. **DJ Sets Index** (`dj_sets/index`): List of all sets with track count, BPM average, duration, harmonic score badges

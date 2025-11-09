@@ -311,6 +311,11 @@ The import system uses a class hierarchy to share common file parsing logic betw
 - Duplicate: Creates copy of set with new name
 - Export: Downloads set as tab-delimited file (compatible with both importers)
 - Convert to Playlist: Transforms set into a playlist, optionally deleting original
+- **Optimize** (`POST /dj_sets/:id/optimize`): Optimizes track order using PlaylistOptimizerService
+  - Accepts params: `start_track_id`, `end_track_id`, `harmonic_weight`, `energy_weight`
+  - Stores pre-optimization order in session for revert capability
+  - Redirects with success message showing score improvement, method used, and computation time
+- **Revert Optimization** (`PATCH /dj_sets/:id/revert_optimization`): Restores original track order from session
 
 **TracksController**
 - Index with search functionality (full-text across database including DJ sets)
@@ -360,6 +365,31 @@ This encourages DJs to create dynamic, engaging sets rather than boring same-key
 - Generates insights and recommendations for improving set flow
 - Methods: `score`, `detailed_analysis`, `generate_insights`, `transition_breakdown`
 
+**PlaylistOptimizerService** (`app/services/playlist_optimizer_service.rb`)
+- Automatically optimizes DJ Set track order for better harmonic flow and energy arc
+- Works with both Playlist and DjSet models (polymorphic design via duck typing)
+- **Algorithm Selection** (based on track count):
+  - 2-10 tracks: **Brute Force** - Guaranteed optimal solution (tries all permutations)
+  - 11-25 tracks: **Genetic Algorithm** - 85-95% optimal with configurable generations/population
+  - 26-50 tracks: **Greedy with Lookahead** - 70-85% optimal, fast for large sets
+- **Energy Estimation**: Estimates track energy from BPM (80%) and key mode (20%)
+  - BPM range: 80-160 for electronic music
+  - Major keys (B) get +20 brightness bonus
+- **Ideal Energy Curve**: Generates target energy progression:
+  - Opening (0-10%): Ease in at mid-energy (40 → 50)
+  - Build (10-60%): Steady climb (50 → 100)
+  - Peak (60-70%): Maximum energy (100)
+  - Drop (70-90%): Cool down (100 → 50)
+  - Closing (90-100%): Wind down (50 → 10)
+- **Combined Scoring**: Balances harmonic flow (default 70%) with energy arc (default 30%)
+  - Uses SetAnalysisService for harmonic scoring
+  - Uses Mean Squared Error for energy arc matching
+- **Constraints**: Supports optional start/end track locking
+- **Result Metadata**: Returns old score, new score, improvement %, computation time, method used
+- Methods: `optimize!`, `apply_optimization!`, `score_arrangement`, `energy_arc_score`
+- Limits: 2-50 tracks only
+- **Note**: Currently used for DJ Set optimization. Playlists are read-only historical records.
+
 **HarmonicMixingService** (`app/services/harmonic_mixing_service.rb`)
 - Finds compatible tracks for a given track with optional BPM range filtering
 - Analyzes playlist transitions returning quality metrics and indicators
@@ -379,17 +409,33 @@ This encourages DJs to create dynamic, engaging sets rather than boring same-key
 - `DjSet#harmonic_flow_score` - Returns 0-100 score (uses v2.0 scoring)
 - `DjSet#harmonic_analysis` - Full analysis with stats
 - `DjSet#detailed_harmonic_analysis` - **v2.0**: Detailed analysis with penalties, bonuses, and insights
+- `DjSet#tracks_in_order` - Returns ordered tracks array
+- `DjSet#optimize_order!(options)` - Optimizes track order using PlaylistOptimizerService
+  - Options: `harmonic_weight`, `energy_weight`, `start_with`, `end_with`, `generations`, `population_size`, `mutation_rate`, `lookahead`
+  - Returns optimization result hash with scores and metadata
 - `DjSet#duplicate(new_name:)` - Creates copy of set
 - `DjSet#export_to_file` - Exports as tab-delimited text
 - `DjSet#convert_to_playlist(name:, cover_art:, description:)` - Converts to Playlist
 
 **UI Features**
 1. **Track Detail Page** (`tracks/show`): "Compatible Tracks" section with BPM slider (±0-20 BPM), results grouped by compatibility type (AJAX loading)
-2. **Playlist Detail Page** (`playlists/show`): Harmonic flow score badge, transition quality indicators between tracks, quality breakdown stats
+2. **Playlist Detail Page** (`playlists/show`):
+   - Harmonic flow score badge with v2.0 breakdown (penalties, bonuses, insights)
+   - Transition quality indicators between tracks
 3. **Playlist Index** (`playlists/index`): Color-coded harmonic score badges on cards (green ≥75%, yellow ≥50%, red <50%)
 4. **Tracks Index** (`tracks/index`): Server-side compatibility filter with BPM range that works across entire database, supports pagination and sorting
 5. **DJ Sets Index** (`dj_sets/index`): List of all sets with track count, BPM average, duration, harmonic score badges
-6. **DJ Set Detail** (`dj_sets/show`): Full track listing with drag-and-drop reordering, bulk track removal, harmonic analysis, transition indicators
+6. **DJ Set Detail** (`dj_sets/show`):
+   - Full track listing with drag-and-drop reordering
+   - Bulk track removal
+   - Harmonic analysis with v2.0 breakdown (penalties, bonuses, insights)
+   - Transition quality indicators between tracks
+   - **DJ Set Optimizer** (collapsible section):
+     - Start/End track dropdowns (optional constraints)
+     - Harmonic/Energy weight slider (0-100%)
+     - Algorithm info tooltip (shows which algorithm will be used based on track count)
+     - "Optimize Set" button
+     - "Revert to Original Order" button (appears after optimization)
 
 **Set Builder Feature** (See [SET_BUILDER_SPEC.md](SET_BUILDER_SPEC.md) for full specification)
 - **Track Selection UI**: Multi-select checkboxes on tracks index page
@@ -407,10 +453,11 @@ This encourages DJs to create dynamic, engaging sets rather than boring same-key
 - `set_builder_controller.js` - Manages track selection, sessionStorage persistence, toolbar visibility, modal interactions
 - `sortable_controller.js` - Drag-and-drop track reordering for DJ sets (uses SortableJS library)
 - `track_remover_controller.js` - Bulk track removal with select all/none functionality
+- `optimizer_controller.js` - Manages DJ Set optimizer UI (collapsible section toggle, harmonic/energy weight slider updates)
 
 ### File Organization
 
-- `app/services/` - Business logic (PlaylistImporter, CamelotWheelService, HarmonicMixingService)
+- `app/services/` - Business logic (PlaylistImporter, CamelotWheelService, HarmonicMixingService, SetAnalysisService, PlaylistOptimizerService)
 - `app/models/concerns/` - Shared model mixins
 - `app/assets/stylesheets/` - SCSS files (Bootstrap-based)
 - `app/assets/builds/` - Compiled CSS output
@@ -476,7 +523,7 @@ bundle exec rspec spec/models/playlist_spec.rb:25
 ### Test Coverage
 The application has comprehensive test coverage including:
 - **Model specs**: All models (Playlist, Track, Artist, Key, PlaylistsTrack, DjSet, DjSetsTrack) with associations, validations, and methods
-- **Service specs**: PlaylistImporter, CamelotWheelService, HarmonicMixingService
+- **Service specs**: PlaylistImporter, CamelotWheelService, HarmonicMixingService, SetAnalysisService, PlaylistOptimizerService (38 examples)
 - **Request specs**: All controllers (Playlists, Tracks, Artists, Keys, DjSets) with extensive tests for:
   - Server-side compatibility filtering on tracks index
   - BPM range filtering with enable/disable checkbox

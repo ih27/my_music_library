@@ -5,7 +5,7 @@ class DjSetsController < ApplicationController
   before_action :set_dj_set, only: %i[show edit update destroy duplicate
                                       export convert_to_playlist add_tracks
                                       remove_track remove_tracks reorder_tracks
-                                      import_tracks]
+                                      import_tracks optimize revert_optimization]
 
   # GET /dj_sets
   def index
@@ -198,6 +198,41 @@ class DjSetsController < ApplicationController
     end
   end
 
+  # POST /dj_sets/:id/optimize
+  def optimize
+    # Store current order in session (for revert)
+    session[:pre_optimization_order] = @dj_set.dj_sets_tracks
+                                              .order(:order)
+                                              .pluck(:track_id)
+
+    options = optimization_params
+    @result = @dj_set.optimize_order!(options)
+
+    redirect_to dj_set_path(@dj_set),
+                notice: "Set optimized! Score: #{@result[:old_score].round(1)} → " \
+                        "#{@result[:new_score].round(1)} (+#{@result[:score_improvement]}%) " \
+                        "using #{@result[:method].humanize} in #{@result[:computation_time]}s"
+  rescue StandardError => e
+    redirect_to dj_set_path(@dj_set), alert: "Optimization failed: #{e.message}"
+  end
+
+  # PATCH /dj_sets/:id/revert_optimization
+  def revert_optimization
+    previous_order = session[:pre_optimization_order]
+
+    if previous_order
+      previous_order.each_with_index do |track_id, index|
+        dj_set_track = @dj_set.dj_sets_tracks.find_by(track_id: track_id)
+        dj_set_track&.update_column(:order, index + 1)
+      end
+
+      session.delete(:pre_optimization_order)
+      redirect_to dj_set_path(@dj_set), notice: "Reverted to previous order"
+    else
+      redirect_to dj_set_path(@dj_set), alert: "No previous order found"
+    end
+  end
+
   private
 
   def set_dj_set
@@ -230,6 +265,27 @@ class DjSetsController < ApplicationController
     @dj_set.dj_sets_tracks.order(:order).each_with_index do |dj_sets_track, index|
       dj_sets_track.update_column(:order, index + 1)
     end
+  end
+
+  def optimization_params
+    permitted = params.permit(
+      :start_track_id,
+      :end_track_id,
+      :harmonic_weight,
+      :energy_weight
+    ).to_h.symbolize_keys
+
+    # Convert track IDs to Track objects
+    permitted[:start_with] = Track.find(permitted.delete(:start_track_id)) if permitted[:start_track_id].present?
+    permitted[:end_with] = Track.find(permitted.delete(:end_track_id)) if permitted[:end_track_id].present?
+
+    # Convert weights to floats
+    if permitted[:harmonic_weight].present?
+      permitted[:harmonic_weight] = permitted[:harmonic_weight].to_f
+      permitted[:energy_weight] = 1.0 - permitted[:harmonic_weight]
+    end
+
+    permitted
   end
 end
 # rubocop:enable Metrics/ClassLength

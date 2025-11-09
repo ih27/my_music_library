@@ -26,6 +26,8 @@ Rails.application.routes.draw do
       get :export
       post :convert_to_playlist
       post :import_tracks
+      post :optimize
+      patch :revert_optimization
     end
   end
 

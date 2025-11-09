@@ -72,6 +72,24 @@ class DjSet < ApplicationRecord
     SetAnalysisService.new(tracks_in_order).detailed_analysis
   end
 
+  # Get ordered tracks for this set
+  #
+  # @return [Array<Track>] Tracks in set order
+  def tracks_in_order
+    dj_sets_tracks.includes(:track).order(:order).map(&:track)
+  end
+
+  # Optimize track order using PlaylistOptimizerService
+  #
+  # @param options [Hash] Options for optimization (harmonic_weight, energy_weight, start_with, end_with, etc.)
+  # @return [Hash] Optimization result with :order, :score, :method, :computation_time, etc.
+  def optimize_order!(options = {})
+    optimizer = PlaylistOptimizerService.new(self, options)
+    result = optimizer.optimize!
+    optimizer.apply_optimization!
+    result
+  end
+
   # Create a duplicate of this set with a new name
   #
   # @param new_name [String] Name for the duplicated set

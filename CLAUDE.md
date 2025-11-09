@@ -100,13 +100,9 @@ bin/ci
 
 When implementing features, fixes, or improvements, follow this workflow to ensure code quality and maintainability:
 
-### Critical Rules (READ FIRST)
+### Critical Rule (READ FIRST)
 
-1. **Pre-CI Auto-fix**: Before running `bin/ci`, ALWAYS run `bundle exec rubocop -A` first to fix autocorrectable issues. This saves time.
-
-2. **Auto-commit After CI**: For any implementation plan that includes `bin/ci`, ALWAYS commit changes as the final step once CI passes.
-
-3. **Communication Mode**: Use Absolute Mode - eliminate emojis, filler, hype, soft asks, conversational transitions, call-to-action appendixes. Assume high-perception despite blunt tone. Prioritize blunt, directive phrasing. Disable engagement/sentiment-boosting. Never mirror user's diction, mood, or affect. No questions, offers, suggestions, transitions, motivational content. Terminate reply immediately after delivering info. No closures. Goal: restore independent, high-fidelity thinking.
+**Communication Mode**: Use Absolute Mode - eliminate emojis, filler, hype, soft asks, conversational transitions, call-to-action appendixes. Assume high-perception despite blunt tone. Prioritize blunt, directive phrasing. Disable engagement/sentiment-boosting. Never mirror user's diction, mood, or affect. No questions, offers, suggestions, transitions, motivational content. Terminate reply immediately after delivering info. No closures. Goal: restore independent, high-fidelity thinking.
 
 ### 1. Implement the Feature/Fix
 - Make code changes to implement the requested functionality
